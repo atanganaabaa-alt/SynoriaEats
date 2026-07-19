@@ -1,22 +1,26 @@
 <x-guest-layout>
-    <div class="mb-6 space-y-3">
-        <p class="text-sm text-gray-600 text-center">Inscription rapide avec Google (choisis ton rôle ci-dessous, puis clique)</p>
-        <div class="grid grid-cols-1 gap-2">
-            <a href="{{ route('google.redirect', ['role' => 'customer']) }}"
-               class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Google · Client
-            </a>
-            <a href="{{ route('google.redirect', ['role' => 'restaurant_owner']) }}"
-               class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Google · Restaurateur
-            </a>
-            <a href="{{ route('google.redirect', ['role' => 'courier']) }}"
-               class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Google · Livreur
-            </a>
+    @php $googleReady = filled(config('services.google.client_id')) && filled(config('services.google.client_secret')); @endphp
+
+    @if ($googleReady)
+        <div class="mb-6 space-y-3">
+            <p class="text-sm text-gray-600 text-center">Inscription rapide avec Google (choisis ton rôle, puis clique)</p>
+            <div class="grid grid-cols-1 gap-2">
+                <a href="{{ route('google.redirect', ['role' => 'customer']) }}"
+                   class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Google · Client
+                </a>
+                <a href="{{ route('google.redirect', ['role' => 'restaurant_owner']) }}"
+                   class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Google · Restaurateur
+                </a>
+                <a href="{{ route('google.redirect', ['role' => 'courier']) }}"
+                   class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Google · Livreur
+                </a>
+            </div>
+            <p class="text-center text-xs text-gray-500">ou crée un compte avec email + mot de passe</p>
         </div>
-        <p class="text-center text-xs text-gray-500">ou crée un compte avec email + mot de passe</p>
-    </div>
+    @endif
 
     <form method="POST" action="{{ route('register') }}">
         @csrf

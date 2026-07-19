@@ -15,19 +15,44 @@ class GoogleAuthController extends Controller
 {
     public function redirect(Request $request): RedirectResponse
     {
-        $request->session()->put('google_oauth_role', $request->string('role')->toString() ?: UserRole::Customer->value);
+        if (! $this->googleIsConfigured()) {
+            return redirect()
+                ->route('login')
+                ->withErrors([
+                    'email' => 'Google n’est pas encore configuré. Ajoute GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans ton .env, ou connecte-toi avec email / mot de passe.',
+                ]);
+        }
 
-        return Socialite::driver('google')->redirect();
+        $request->session()->put(
+            'google_oauth_role',
+            $request->string('role')->toString() ?: UserRole::Customer->value
+        );
+
+        return Socialite::driver('google')
+            ->scopes(['openid', 'profile', 'email'])
+            ->redirect();
     }
 
     public function callback(Request $request): RedirectResponse
     {
+        if (! $this->googleIsConfigured()) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Google n’est pas configuré sur ce serveur.']);
+        }
+
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable) {
             return redirect()
                 ->route('login')
                 ->withErrors(['email' => 'Connexion Google impossible. Réessaie ou utilise email / mot de passe.']);
+        }
+
+        if (blank($googleUser->getEmail())) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Google n’a pas renvoyé d’email. Autorise l’accès à l’email ou utilise un autre compte.']);
         }
 
         $roleValue = $request->session()->pull('google_oauth_role', UserRole::Customer->value);
@@ -49,7 +74,7 @@ class GoogleAuthController extends Controller
             ])->save();
         } else {
             $user = User::query()->create([
-                'name' => $googleUser->getName() ?: ($googleUser->getEmail() ?? 'Utilisateur SynoriaEats'),
+                'name' => $googleUser->getName() ?: $googleUser->getEmail(),
                 'email' => $googleUser->getEmail(),
                 'google_id' => $googleUser->getId(),
                 'avatar_url' => $googleUser->getAvatar(),
@@ -69,5 +94,11 @@ class GoogleAuthController extends Controller
         Auth::login($user, true);
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    private function googleIsConfigured(): bool
+    {
+        return filled(config('services.google.client_id'))
+            && filled(config('services.google.client_secret'));
     }
 }

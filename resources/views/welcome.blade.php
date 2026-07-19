@@ -26,10 +26,10 @@
         <main class="mx-auto max-w-5xl px-6 py-20 md:py-28">
             <p class="text-sm font-medium uppercase tracking-wider text-emerald-700">Suite Synoria</p>
             <h1 class="mt-3 max-w-2xl text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
-                Tes restos préférés, livrés comme sur EasyFood & Uber Eats.
+                Commande tes repas. SynoriaEats s’occupe de la livraison.
             </h1>
             <p class="mt-5 max-w-xl text-lg text-gray-600">
-                SynoriaEats est l’app livraison de repas de la famille Synoria — fullstack Laravel, prêts pour la sécu et le déploiement.
+                L’app livraison de la suite Synoria — restos près de chez toi, menu clair, compte sécurisé.
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
                 <a href="{{ route('restaurants.index') }}" class="inline-flex items-center rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
