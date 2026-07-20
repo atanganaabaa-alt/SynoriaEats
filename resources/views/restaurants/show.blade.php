@@ -25,14 +25,29 @@
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ $category ?: 'Menu' }}</h3>
                     <ul class="divide-y divide-gray-100">
                         @foreach ($items as $item)
-                            <li class="py-3 flex items-start justify-between gap-4">
+                            <li class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <p class="font-medium text-gray-900">{{ $item->name }}</p>
                                     <p class="text-sm text-gray-500">{{ $item->description }}</p>
+                                    <p class="font-semibold text-emerald-700 mt-1">
+                                        {{ number_format($item->price, 0, ',', ' ') }} FCFA
+                                    </p>
                                 </div>
-                                <p class="shrink-0 font-semibold text-emerald-700">
-                                    {{ number_format($item->price, 0, ',', ' ') }} FCFA
-                                </p>
+                                @auth
+                                    @if ($item->is_available)
+                                        <form method="POST" action="{{ route('cart.store') }}" class="flex items-center gap-2 shrink-0">
+                                            @csrf
+                                            <input type="hidden" name="menu_item_id" value="{{ $item->id }}">
+                                            <input type="number" name="quantity" value="1" min="1" max="10"
+                                                   class="w-16 rounded-md border-gray-300 text-sm">
+                                            <x-primary-button type="submit">Ajouter</x-primary-button>
+                                        </form>
+                                    @else
+                                        <span class="text-sm text-gray-400">Indisponible</span>
+                                    @endif
+                                @else
+                                    <a href="{{ route('login') }}" class="text-sm text-emerald-700 hover:underline">Connecte-toi pour commander</a>
+                                @endauth
                             </li>
                         @endforeach
                     </ul>

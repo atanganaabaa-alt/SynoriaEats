@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
+use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController as OwnerRestaurantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RestaurantController;
@@ -31,6 +34,14 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
+    Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
+    Route::patch('/cart/{menuItem}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart', [CartController::class, 'destroy'])->name('cart.destroy');
+
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
@@ -39,6 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::middleware('role:restaurant_owner,admin')->prefix('owner')->name('owner.')->group(function () {
+        Route::get('orders', [OwnerOrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [OwnerOrderController::class, 'show'])->name('orders.show');
+        Route::patch('orders/{order}', [OwnerOrderController::class, 'update'])->name('orders.update');
+
         Route::resource('restaurants', OwnerRestaurantController::class);
         Route::get('restaurants/{restaurant}/menu-items/create', [OwnerMenuItemController::class, 'create'])
             ->name('menu-items.create');

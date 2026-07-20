@@ -41,4 +41,21 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
     ],
 
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+    ],
+
+    'orange_money' => [
+        'merchant_key' => env('ORANGE_MONEY_MERCHANT_KEY'),
+        'merchant_secret' => env('ORANGE_MONEY_MERCHANT_SECRET'),
+    ],
+
+    'mtn_momo' => [
+        'subscription_key' => env('MTN_MOMO_SUBSCRIPTION_KEY'),
+        'api_user' => env('MTN_MOMO_API_USER'),
+        'api_key' => env('MTN_MOMO_API_KEY'),
+    ],
+
 ];

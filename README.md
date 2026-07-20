@@ -57,8 +57,8 @@ Aucun mot de passe partagé en base. Chacun crée son compte.
 | POST | `/api/restaurants` | resto / admin |
 | POST | `/api/restaurants/{id}/menu-items` | resto / admin |
 
-## Sprint 1 — livré
+## Sprint 2 — livré
 
-Inscription multi-rôles, Google OAuth, CRUD restaurateur/menu, catalogue client, API de base.
+Panier, checkout Mobile Money (Orange / MTN), notifications, gestion commandes restaurateur, historique client.
 
-Prochain : **Sprint 2** — panier, commande, Mobile Money.
+Prochain : **Sprint 3** — livraison, suivi temps réel, évaluations.

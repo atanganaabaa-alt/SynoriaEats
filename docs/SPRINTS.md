@@ -31,16 +31,15 @@ Un restaurateur crée son profil et ajoute ses plats.
 
 ---
 
-## Sprint 2 — Commander et payer
+## Sprint 2 — Commander et payer ✅
 **22 Juin → 06 Juillet**
 
-Cœur métier.
+Cœur métier — **livré**.
 
-- Panier + commande + adresse
-- Orange Money + MTN MoMo
-- Confirmation client / restaurateur
-- SMS/WhatsApp (Twilio / Orange)
-- Gestion commandes restaurateur (accepter → prête)
+- Panier session + checkout (adresse, téléphone)
+- Paiement **Orange Money** + **MTN MoMo** (sandbox local, prod via `.env`)
+- Confirmation client / restaurateur + notifications (log ou Twilio)
+- Gestion commandes restaurateur (accepter → préparer → prête)
 - Historique client
 
 ### Résultat visible

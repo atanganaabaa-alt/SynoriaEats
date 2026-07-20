@@ -13,9 +13,18 @@
                         {{ __('Restaurants') }}
                     </x-nav-link>
                     @auth
+                        <x-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
+                            {{ __('Panier') }}
+                            @if (($cartCount ?? 0) > 0)
+                                <span class="ms-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">{{ $cartCount }}</span>
+                            @endif
+                        </x-nav-link>
                         @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
-                            <x-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.*')">
+                            <x-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*') || request()->routeIs('owner.menu-items.*')">
                                 {{ __('Mon resto') }}
+                            </x-nav-link>
+                            <x-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
+                                {{ __('Commandes reçues') }}
                             </x-nav-link>
                         @endif
                         <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
@@ -77,9 +86,15 @@
                 {{ __('Restaurants') }}
             </x-responsive-nav-link>
             @auth
+                <x-responsive-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
+                    {{ __('Panier') }} @if(($cartCount ?? 0) > 0)({{ $cartCount }})@endif
+                </x-responsive-nav-link>
                 @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
-                    <x-responsive-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.*')">
+                    <x-responsive-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*')">
                         {{ __('Mon resto') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
+                        {{ __('Commandes reçues') }}
                     </x-responsive-nav-link>
                 @endif
                 <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
