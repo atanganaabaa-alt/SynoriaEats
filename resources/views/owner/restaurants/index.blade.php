@@ -27,8 +27,11 @@
                     </div>
                 </a>
             @empty
-                <div class="bg-white shadow-sm sm:rounded-lg p-8 text-center text-gray-500">
-                    Aucun restaurant. Crée ton profil restaurateur pour commencer.
+                <div class="bg-white shadow-sm sm:rounded-lg p-8 text-center space-y-4">
+                    <p class="text-gray-500">Commence par créer ton restaurant, puis ajoute tes plats au menu.</p>
+                    <a href="{{ route('owner.restaurants.create') }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-500">
+                        Créer mon restaurant
+                    </a>
                 </div>
             @endforelse
         </div>

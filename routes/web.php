@@ -54,7 +54,6 @@ Route::middleware('auth')->group(function () {
         Route::get('orders/{order}', [OwnerOrderController::class, 'show'])->name('orders.show');
         Route::patch('orders/{order}', [OwnerOrderController::class, 'update'])->name('orders.update');
 
-        Route::resource('restaurants', OwnerRestaurantController::class);
         Route::get('restaurants/{restaurant}/menu-items/create', [OwnerMenuItemController::class, 'create'])
             ->name('menu-items.create');
         Route::post('restaurants/{restaurant}/menu-items', [OwnerMenuItemController::class, 'store'])
@@ -65,6 +64,8 @@ Route::middleware('auth')->group(function () {
             ->name('menu-items.update');
         Route::delete('menu-items/{menuItem}', [OwnerMenuItemController::class, 'destroy'])
             ->name('menu-items.destroy');
+
+        Route::resource('restaurants', OwnerRestaurantController::class);
     });
 });
 

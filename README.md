@@ -33,6 +33,8 @@ npm install && npm run build
 php artisan serve
 ```
 
+> **Pas de données démo** : la base démarre vide. Seuls les restaurants créés par de vrais restaurateurs apparaissent, et uniquement après ajout d’au moins un plat au menu. Pour repartir de zéro : `php artisan migrate:fresh`.
+
 Dev tout-en-un : `composer run dev`
 
 ## Auth (pas de comptes démo)
@@ -59,6 +61,35 @@ Aucun mot de passe partagé en base. Chacun crée son compte.
 
 ## Sprint 2 — livré
 
-Panier, checkout Mobile Money (Orange / MTN), notifications, gestion commandes restaurateur, historique client.
+Panier, checkout Mobile Money (Orange / MTN), notifications SMS/WhatsApp (Twilio), gestion commandes restaurateur, historique client.
+
+### Notifications (Twilio)
+
+En dev, les messages partent dans les logs Laravel :
+
+```env
+SYNORIA_NOTIFICATION_CHANNELS=log
+```
+
+En prod, SMS/WhatsApp (Twilio) et/ou SMS Orange :
+
+```env
+SYNORIA_NOTIFICATION_CHANNELS=orange_sms,whatsapp
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_SMS_FROM=+1415...
+TWILIO_WHATSAPP_FROM=14155238886
+ORANGE_SMS_CLIENT_ID=...
+ORANGE_SMS_CLIENT_SECRET=...
+ORANGE_SMS_SENDER=2370000
+```
+
+Pour WhatsApp sandbox Twilio, le client doit d’abord envoyer « join … » au numéro sandbox depuis son téléphone.
+
+### Restaurateur — ajouter des plats
+
+1. S’inscrire avec le rôle **Restaurateur** (pas Client)
+2. Menu **Mon resto** → **Créer mon restaurant**
+3. Sur la fiche restaurant : formulaire **Ajouter un plat au menu**
 
 Prochain : **Sprint 3** — livraison, suivi temps réel, évaluations.

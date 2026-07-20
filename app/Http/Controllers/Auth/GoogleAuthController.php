@@ -98,7 +98,15 @@ class GoogleAuthController extends Controller
 
     private function googleIsConfigured(): bool
     {
-        return filled(config('services.google.client_id'))
-            && filled(config('services.google.client_secret'));
+        $clientId = (string) config('services.google.client_id');
+        $clientSecret = (string) config('services.google.client_secret');
+
+        if (blank($clientId) || blank($clientSecret)) {
+            return false;
+        }
+
+        return ! str_starts_with($clientId, 'COLLER')
+            && ! str_contains($clientId, 'YOUR_')
+            && ! str_starts_with($clientSecret, 'COLLER');
     }
 }

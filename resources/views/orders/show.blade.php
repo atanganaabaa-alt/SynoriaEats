@@ -8,6 +8,13 @@
 
     <div class="py-8">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if (session('status'))
+                <div class="bg-emerald-50 border border-emerald-100 text-emerald-900 px-4 py-3 rounded-md text-sm">
+                    {{ session('status') }}
+                    <p class="mt-1">Une notification SMS/WhatsApp a été envoyée au {{ $order->delivery_phone }}.</p>
+                </div>
+            @endif
+
             <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-2">
                 <p><span class="text-gray-500">Restaurant :</span> {{ $order->restaurant->name }}</p>
                 <p><span class="text-gray-500">Statut :</span> {{ $order->status->label() }}</p>

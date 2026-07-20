@@ -38,7 +38,7 @@ Cœur métier — **livré**.
 
 - Panier session + checkout (adresse, téléphone)
 - Paiement **Orange Money** + **MTN MoMo** (sandbox local, prod via `.env`)
-- Confirmation client / restaurateur + notifications (log ou Twilio)
+- Confirmation client / restaurateur + notifications (**log**, **Twilio SMS/WhatsApp**, **Orange SMS API**)
 - Gestion commandes restaurateur (accepter → préparer → prête)
 - Historique client
 

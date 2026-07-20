@@ -9,7 +9,8 @@ return [
     ],
 
     'notifications' => [
-        'driver' => env('SYNORIA_NOTIFIER', 'log'),
+        // Channels: log (dev), sms, whatsapp (Twilio), orange_sms — e.g. orange_sms,whatsapp
+        'channels' => env('SYNORIA_NOTIFICATION_CHANNELS', 'log'),
     ],
 
 ];

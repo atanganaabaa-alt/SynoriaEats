@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -42,11 +43,15 @@ class RegisteredUserController extends Controller
                 UserRole::Courier->value,
             ])],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.unique' => 'Un compte existe déjà avec cet email. Connecte-toi plutôt.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'role.required' => 'Choisis ton rôle (Client, Restaurateur ou Livreur).',
         ]);
 
         $user = User::query()->create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => Str::lower($validated['email']),
             'phone' => $validated['phone'] ?? null,
             'password' => $validated['password'],
             'role' => UserRole::from($validated['role']),

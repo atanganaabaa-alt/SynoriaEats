@@ -1,5 +1,12 @@
 <x-guest-layout>
-    @php $googleReady = filled(config('services.google.client_id')) && filled(config('services.google.client_secret')); @endphp
+    @php
+        $googleId = (string) config('services.google.client_id');
+        $googleSecret = (string) config('services.google.client_secret');
+        $googleReady = filled($googleId)
+            && filled($googleSecret)
+            && ! str_starts_with($googleId, 'COLLER')
+            && ! str_contains($googleId, 'YOUR_');
+    @endphp
 
     @if ($googleReady)
         <div class="mb-6">

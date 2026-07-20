@@ -12,6 +12,7 @@ class RestaurantController extends Controller
     {
         $restaurants = Restaurant::query()
             ->where('is_open', true)
+            ->whereHas('menuItems', fn ($query) => $query->where('is_available', true))
             ->when($request->filled('q'), function ($query) use ($request) {
                 $term = '%'.$request->string('q').'%';
 
@@ -27,6 +28,8 @@ class RestaurantController extends Controller
             ->withQueryString();
 
         $categories = Restaurant::query()
+            ->where('is_open', true)
+            ->whereHas('menuItems', fn ($query) => $query->where('is_available', true))
             ->whereNotNull('category')
             ->distinct()
             ->orderBy('category')

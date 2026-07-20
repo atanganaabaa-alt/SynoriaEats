@@ -2,20 +2,23 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
 use App\Models\Restaurant;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class StoreMenuItemRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var Restaurant $restaurant */
+        /** @var Restaurant|null $restaurant */
         $restaurant = $this->route('restaurant');
 
-        return $this->user()?->isAdmin()
-            || ($this->user()?->role === UserRole::RestaurantOwner
-                && $restaurant->owner_id === $this->user()->id);
+        if (! $restaurant || ! $this->user()) {
+            return false;
+        }
+
+        return $this->user()->isAdmin()
+            || ($this->user()->isRestaurantOwner() && $restaurant->owner_id === $this->user()->id);
     }
 
     /**
@@ -30,6 +33,26 @@ class StoreMenuItemRequest extends FormRequest
             'category' => ['nullable', 'string', 'max:60'],
             'is_available' => ['sometimes', 'boolean'],
             'photo' => ['nullable', 'image', 'max:2048'],
+        ];
+    }
+
+    protected function failedAuthorization(): void
+    {
+        throw new AuthorizationException('Seuls les restaurateurs peuvent gérer le menu de ce restaurant.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function menuItemAttributes(Restaurant $restaurant): array
+    {
+        return [
+            'restaurant_id' => $restaurant->id,
+            'name' => $this->string('name')->toString(),
+            'description' => $this->input('description'),
+            'price' => (int) $this->input('price'),
+            'category' => $this->input('category', 'Plats'),
+            'is_available' => $this->boolean('is_available', true),
         ];
     }
 }

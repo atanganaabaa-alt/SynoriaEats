@@ -42,14 +42,21 @@ return [
     ],
 
     'twilio' => [
-        'sid' => env('TWILIO_SID'),
-        'token' => env('TWILIO_AUTH_TOKEN'),
-        'from' => env('TWILIO_FROM'),
+        'sid' => env('TWILIO_ACCOUNT_SID', env('TWILIO_SID')),
+        'token' => env('TWILIO_AUTH_TOKEN', env('TWILIO_AUTH_TOKEN')),
+        'sms_from' => env('TWILIO_SMS_FROM', env('TWILIO_FROM')),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', '14155238886'),
     ],
 
     'orange_money' => [
         'merchant_key' => env('ORANGE_MONEY_MERCHANT_KEY'),
         'merchant_secret' => env('ORANGE_MONEY_MERCHANT_SECRET'),
+    ],
+
+    'orange_sms' => [
+        'client_id' => env('ORANGE_SMS_CLIENT_ID'),
+        'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
+        'sender' => env('ORANGE_SMS_SENDER', '2370000'),
     ],
 
     'mtn_momo' => [

@@ -46,8 +46,9 @@
                         </p>
                     </a>
                 @empty
-                    <div class="col-span-full bg-white shadow-sm sm:rounded-lg p-8 text-center text-gray-500">
-                        Aucun restaurant trouvé.
+                    <div class="col-span-full bg-white shadow-sm sm:rounded-lg p-8 text-center space-y-3 text-gray-500">
+                        <p>Aucun restaurant avec menu disponible pour l’instant.</p>
+                        <p class="text-sm">Les restaurants apparaissent ici une fois que le restaurateur a ajouté des plats à son menu.</p>
                     </div>
                 @endforelse
             </div>

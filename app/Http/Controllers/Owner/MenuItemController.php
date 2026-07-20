@@ -23,9 +23,7 @@ class MenuItemController extends Controller
 
     public function store(StoreMenuItemRequest $request, Restaurant $restaurant): RedirectResponse
     {
-        $data = $request->safe()->except(['photo']);
-        $data['restaurant_id'] = $restaurant->id;
-        $data['is_available'] = $request->boolean('is_available', true);
+        $data = $request->menuItemAttributes($restaurant);
 
         if ($request->hasFile('photo')) {
             $data['photo_url'] = $request->file('photo')->store('menu-items', 'public');
@@ -51,8 +49,13 @@ class MenuItemController extends Controller
 
     public function update(UpdateMenuItemRequest $request, MenuItem $menuItem): RedirectResponse
     {
-        $data = $request->safe()->except(['photo']);
-        $data['is_available'] = $request->boolean('is_available');
+        $data = [
+            'name' => $request->string('name')->toString(),
+            'description' => $request->input('description'),
+            'price' => (int) $request->input('price'),
+            'category' => $request->input('category', 'Plats'),
+            'is_available' => $request->boolean('is_available'),
+        ];
 
         if ($request->hasFile('photo')) {
             if ($menuItem->photo_url) {

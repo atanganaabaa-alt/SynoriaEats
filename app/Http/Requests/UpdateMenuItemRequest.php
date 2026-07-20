@@ -2,20 +2,23 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
 use App\Models\MenuItem;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class UpdateMenuItemRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        /** @var MenuItem $menuItem */
+        /** @var MenuItem|null $menuItem */
         $menuItem = $this->route('menuItem');
 
-        return $this->user()?->isAdmin()
-            || ($this->user()?->role === UserRole::RestaurantOwner
-                && $menuItem->restaurant->owner_id === $this->user()->id);
+        if (! $menuItem || ! $this->user()) {
+            return false;
+        }
+
+        return $this->user()->isAdmin()
+            || ($this->user()->isRestaurantOwner() && $menuItem->restaurant->owner_id === $this->user()->id);
     }
 
     /**
@@ -31,5 +34,10 @@ class UpdateMenuItemRequest extends FormRequest
             'is_available' => ['sometimes', 'boolean'],
             'photo' => ['nullable', 'image', 'max:2048'],
         ];
+    }
+
+    protected function failedAuthorization(): void
+    {
+        throw new AuthorizationException('Tu ne peux pas modifier ce plat.');
     }
 }
