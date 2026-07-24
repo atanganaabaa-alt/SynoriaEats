@@ -31,6 +31,8 @@
                 <p>Livraison {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA · {{ $restaurant->prep_time_min }}–{{ $restaurant->prep_time_max }} min</p>
                 @if ($restaurant->menuItems->isEmpty())
                     <p class="text-amber-700">Ajoute au moins un plat pour que ton restaurant apparaisse dans le catalogue client.</p>
+                @elseif (! $restaurant->is_validated)
+                    <p class="text-amber-700">En attente de validation admin — pas encore visible au catalogue.</p>
                 @elseif ($restaurant->is_open)
                     <p class="text-emerald-700">Visible dans le catalogue client.</p>
                 @endif

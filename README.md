@@ -107,4 +107,13 @@ SYNORIA_DELIVERY_FEE_PER_KM=200
 SYNORIA_DELIVERY_MIN_FEE=0
 ```
 
-Prochain : **Sprint 4** — back-office admin, commissions, déploiement.
+## Sprint 4 — livré
+
+Back-office admin : dashboard CA/livraisons/notes, suspendre comptes, valider restos, rapport commissions, filtres catalogue.
+
+```bash
+php artisan synoria:admin admin@example.com 'MotDePasseFort!'
+# puis /admin
+```
+
+Déploiement VPS : [docs/DEPLOY_VPS.md](docs/DEPLOY_VPS.md)

@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'latitude',
     'longitude',
     'is_open',
+    'is_validated',
 ])]
 class Restaurant extends Model
 {
@@ -43,6 +44,7 @@ class Restaurant extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'is_open' => 'boolean',
+            'is_validated' => 'boolean',
         ];
     }
 

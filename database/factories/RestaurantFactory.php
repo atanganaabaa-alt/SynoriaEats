@@ -37,6 +37,7 @@ class RestaurantFactory extends Factory
             'latitude' => fake()->latitude(3.8, 4.1),
             'longitude' => fake()->longitude(11.4, 11.6),
             'is_open' => true,
+            'is_validated' => true,
         ];
     }
 }

@@ -19,6 +19,11 @@
                                 <span class="ms-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">{{ $cartCount }}</span>
                             @endif
                         </x-nav-link>
+                        @if (Auth::user()->isAdmin())
+                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                                {{ __('Admin') }}
+                            </x-nav-link>
+                        @endif
                         @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
                             <x-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*') || request()->routeIs('owner.menu-items.*')">
                                 {{ __('Mon resto') }}
@@ -32,9 +37,11 @@
                                 {{ __('Missions') }}
                             </x-nav-link>
                         @endif
-                        <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
-                            {{ __('Commandes') }}
-                        </x-nav-link>
+                        @unless (Auth::user()->isAdmin())
+                            <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                                {{ __('Commandes') }}
+                            </x-nav-link>
+                        @endunless
                     @endauth
                 </div>
             </div>
@@ -94,6 +101,11 @@
                 <x-responsive-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
                     {{ __('Panier') }} @if(($cartCount ?? 0) > 0)({{ $cartCount }})@endif
                 </x-responsive-nav-link>
+                @if (Auth::user()->isAdmin())
+                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                        {{ __('Admin') }}
+                    </x-responsive-nav-link>
+                @endif
                 @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
                     <x-responsive-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*')">
                         {{ __('Mon resto') }}
@@ -107,9 +119,11 @@
                         {{ __('Missions') }}
                     </x-responsive-nav-link>
                 @endif
-                <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
-                    {{ __('Commandes') }}
-                </x-responsive-nav-link>
+                @unless (Auth::user()->isAdmin())
+                    <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
+                        {{ __('Commandes') }}
+                    </x-responsive-nav-link>
+                @endunless
             @endauth
         </div>
 

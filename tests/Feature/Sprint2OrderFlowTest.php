@@ -51,6 +51,7 @@ class Sprint2OrderFlowTest extends TestCase
             ->assertRedirect();
 
         $restaurant = Restaurant::query()->where('owner_id', $owner->id)->firstOrFail();
+        $restaurant->update(['is_validated' => true]);
 
         $this->actingAs($owner)
             ->post(route('owner.menu-items.store', $restaurant), [

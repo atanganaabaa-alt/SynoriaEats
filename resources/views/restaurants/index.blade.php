@@ -12,13 +12,13 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <form method="GET" class="bg-white shadow-sm sm:rounded-lg p-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <form method="GET" class="bg-white shadow-sm sm:rounded-lg p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <input
                     type="search"
                     name="q"
                     value="{{ request('q') }}"
                     placeholder="Rechercher un restaurant…"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 lg:col-span-2"
                 />
                 <select name="category" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Toutes catégories</option>
@@ -26,7 +26,26 @@
                         <option value="{{ $category }}" @selected(request('category') === $category)>{{ $category }}</option>
                     @endforeach
                 </select>
-                <x-primary-button>Filtrer</x-primary-button>
+                <select name="min_rating" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="">Note min.</option>
+                    <option value="4" @selected(request('min_rating') === '4')>★ 4+</option>
+                    <option value="4.5" @selected(request('min_rating') === '4.5')>★ 4.5+</option>
+                </select>
+                <select name="max_fee" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="">Frais max</option>
+                    <option value="0" @selected(request('max_fee') === '0')>Gratuit</option>
+                    <option value="500" @selected(request('max_fee') === '500')>≤ 500 FCFA</option>
+                    <option value="1000" @selected(request('max_fee') === '1000')>≤ 1 000 FCFA</option>
+                </select>
+                <select name="sort" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="rating" @selected(request('sort', 'rating') === 'rating')>Mieux notés</option>
+                    <option value="fee" @selected(request('sort') === 'fee')>Frais croissants</option>
+                    <option value="prep" @selected(request('sort') === 'prep')>Plus rapides</option>
+                    <option value="name" @selected(request('sort') === 'name')>Nom A–Z</option>
+                </select>
+                <div class="sm:col-span-2 lg:col-span-5">
+                    <x-primary-button>Filtrer</x-primary-button>
+                </div>
             </form>
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -48,7 +67,7 @@
                 @empty
                     <div class="col-span-full bg-white shadow-sm sm:rounded-lg p-8 text-center space-y-3 text-gray-500">
                         <p>Aucun restaurant avec menu disponible pour l’instant.</p>
-                        <p class="text-sm">Les restaurants apparaissent ici une fois que le restaurateur a ajouté des plats à son menu.</p>
+                        <p class="text-sm">Les restaurants apparaissent ici une fois validés par l’admin, avec au moins un plat.</p>
                     </div>
                 @endforelse
             </div>

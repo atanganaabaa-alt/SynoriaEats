@@ -14,8 +14,11 @@ class RestaurantController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $sort = $request->string('sort')->toString() ?: 'rating';
+
         $restaurants = Restaurant::query()
             ->where('is_open', true)
+            ->where('is_validated', true)
             ->when($request->filled('q'), function ($query) use ($request) {
                 $term = '%'.$request->string('q').'%';
                 $query->where(function ($inner) use ($term) {
@@ -24,7 +27,11 @@ class RestaurantController extends Controller
                 });
             })
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
-            ->orderByDesc('rating')
+            ->when($request->filled('min_rating'), fn ($q) => $q->where('rating', '>=', (float) $request->input('min_rating')))
+            ->when($request->filled('max_fee'), fn ($q) => $q->where('delivery_fee', '<=', (int) $request->input('max_fee')))
+            ->when($sort === 'fee', fn ($q) => $q->orderBy('delivery_fee')->orderByDesc('rating'))
+            ->when($sort === 'name', fn ($q) => $q->orderBy('name'))
+            ->when(! in_array($sort, ['fee', 'name'], true), fn ($q) => $q->orderByDesc('rating'))
             ->paginate(20);
 
         return response()->json($restaurants);
@@ -32,6 +39,8 @@ class RestaurantController extends Controller
 
     public function show(Restaurant $restaurant): JsonResponse
     {
+        abort_unless($restaurant->is_validated, 404);
+
         $restaurant->load(['menuItems' => fn ($q) => $q->where('is_available', true)->orderBy('category')]);
 
         return response()->json($restaurant);

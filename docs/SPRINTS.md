@@ -62,16 +62,16 @@ Chaîne complète commande → livraison + notes.
 
 ---
 
-## Sprint 4 — Back-office et finition
+## Sprint 4 — Back-office et finition ✅
 **17 Août → 31 Août**
 
 - Dashboard admin (CA, livraisons, satisfaction)
-- Gestion comptes (suspendre, valider resto)
-- Commissions
-- Filtres restaurants
-- UI/UX responsive (+ mobile plus tard)
+- Gestion comptes (suspendre) + validation restaurants
+- Commissions (rapport + taux `.env`)
+- Filtres restaurants (note, frais, tri)
+- UI/UX responsive (nav + grilles admin)
 - Tests + correctifs
-- Déploiement VPS
+- Déploiement VPS — [docs/DEPLOY_VPS.md](DEPLOY_VPS.md)
 
 ### Résultat visible
-Plateforme en prod, admin opérationnel.
+Plateforme prête prod, admin opérationnel.

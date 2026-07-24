@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\CommissionController as AdminCommissionController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\RestaurantController as AdminRestaurantController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
@@ -30,7 +34,7 @@ Route::get('/dashboard', function () {
     return match ($user?->role) {
         UserRole::RestaurantOwner => redirect()->route('owner.restaurants.index'),
         UserRole::Courier => redirect()->route('courier.missions.index'),
-        UserRole::Admin => redirect()->route('restaurants.index'),
+        UserRole::Admin => redirect()->route('admin.dashboard'),
         default => redirect()->route('restaurants.index'),
     };
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -52,6 +56,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', AdminDashboardController::class)->name('dashboard');
+        Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::patch('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
+        Route::get('restaurants', [AdminRestaurantController::class, 'index'])->name('restaurants.index');
+        Route::patch('restaurants/{restaurant}', [AdminRestaurantController::class, 'update'])->name('restaurants.update');
+        Route::get('commissions', [AdminCommissionController::class, 'index'])->name('commissions.index');
+    });
 
     Route::middleware('role:courier,admin')->prefix('courier')->name('courier.')->group(function () {
         Route::get('missions', [MissionController::class, 'index'])->name('missions.index');
