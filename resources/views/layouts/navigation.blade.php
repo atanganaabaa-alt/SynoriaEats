@@ -27,6 +27,11 @@
                                 {{ __('Commandes reçues') }}
                             </x-nav-link>
                         @endif
+                        @if (Auth::user()->isCourier() || Auth::user()->isAdmin())
+                            <x-nav-link :href="route('courier.missions.index')" :active="request()->routeIs('courier.*')">
+                                {{ __('Missions') }}
+                            </x-nav-link>
+                        @endif
                         <x-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">
                             {{ __('Commandes') }}
                         </x-nav-link>
@@ -95,6 +100,11 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
                         {{ __('Commandes reçues') }}
+                    </x-responsive-nav-link>
+                @endif
+                @if (Auth::user()->isCourier() || Auth::user()->isAdmin())
+                    <x-responsive-nav-link :href="route('courier.missions.index')" :active="request()->routeIs('courier.*')">
+                        {{ __('Missions') }}
                     </x-responsive-nav-link>
                 @endif
                 <x-responsive-nav-link :href="route('orders.index')" :active="request()->routeIs('orders.*')">

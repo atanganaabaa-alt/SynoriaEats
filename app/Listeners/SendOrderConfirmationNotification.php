@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\OrderStatus;
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
 use App\Services\Notifications\Notifier;
@@ -34,7 +35,7 @@ class SendOrderConfirmationNotification
 
     public function handleOrderStatusChanged(OrderStatusChanged $event): void
     {
-        $order = $event->order->loadMissing('customer');
+        $order = $event->order->loadMissing(['customer', 'courier', 'restaurant.owner']);
 
         $message = sprintf(
             'SynoriaEats : commande %s — statut : %s.',
@@ -43,5 +44,20 @@ class SendOrderConfirmationNotification
         );
 
         $this->notifier->send($order->delivery_phone, $message);
+
+        if ($order->courier?->phone && in_array($order->status, [
+            OrderStatus::Ready,
+            OrderStatus::OutForDelivery,
+            OrderStatus::Delivered,
+        ], true)) {
+            $this->notifier->send($order->courier->phone, $message);
+        }
+
+        if ($order->status === OrderStatus::Ready && $order->restaurant->owner?->phone) {
+            $this->notifier->send(
+                $order->restaurant->owner->phone,
+                sprintf('SynoriaEats : commande %s prête — en attente d’un livreur.', $order->number)
+            );
+        }
     }
 }

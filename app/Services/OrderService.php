@@ -9,6 +9,7 @@ use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\Notifications\Notifier;
 use App\Services\Payments\PaymentManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,10 +19,12 @@ class OrderService
 {
     public function __construct(
         private PaymentManager $payments,
+        private DeliveryFeeCalculator $deliveryFees,
+        private Notifier $notifier,
     ) {}
 
     /**
-     * @param  array{delivery_address: string, delivery_phone: string, payment_method: string, payment_phone?: string|null, notes?: string|null}  $data
+     * @param  array{delivery_address: string, delivery_phone: string, payment_method: string, payment_phone?: string|null, notes?: string|null, delivery_lat?: float|null, delivery_lng?: float|null}  $data
      */
     public function placeFromCart(User $customer, CartService $cart, array $data): Order
     {
@@ -35,20 +38,30 @@ class OrderService
             throw new InvalidArgumentException('Les plats du panier ne sont plus disponibles.');
         }
 
+        $restaurant = $cart->restaurant();
+
+        if (! $restaurant) {
+            throw new InvalidArgumentException('Restaurant introuvable pour ce panier.');
+        }
+
+        $deliveryLat = isset($data['delivery_lat']) ? (float) $data['delivery_lat'] : null;
+        $deliveryLng = isset($data['delivery_lng']) ? (float) $data['delivery_lng'] : null;
         $subtotal = $cart->subtotal();
-        $deliveryFee = $cart->deliveryFee();
+        $deliveryFee = $this->deliveryFees->forRestaurant($restaurant, $deliveryLat, $deliveryLng);
         $commission = (int) round($subtotal * config('synoria.commission_rate', 0.10));
         $total = $subtotal + $deliveryFee;
         $paymentMethod = PaymentMethod::from($data['payment_method']);
         $paymentPhone = $data['payment_phone'] ?? $data['delivery_phone'];
 
-        $order = DB::transaction(function () use ($customer, $cart, $data, $lines, $subtotal, $deliveryFee, $commission, $total, $paymentMethod) {
+        $order = DB::transaction(function () use ($customer, $cart, $data, $lines, $subtotal, $deliveryFee, $commission, $total, $paymentMethod, $deliveryLat, $deliveryLng) {
             $order = Order::query()->create([
                 'number' => $this->generateNumber(),
                 'customer_id' => $customer->id,
                 'restaurant_id' => $cart->restaurantId(),
                 'delivery_address' => $data['delivery_address'],
                 'delivery_phone' => $data['delivery_phone'],
+                'delivery_lat' => $deliveryLat,
+                'delivery_lng' => $deliveryLng,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
                 'commission' => $commission,
@@ -99,7 +112,93 @@ class OrderService
         $previous = $order->status;
         $order->update(['status' => $status]);
 
-        OrderStatusChanged::dispatch($order->fresh(), $previous);
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+
+        return $order->fresh();
+    }
+
+    public function claim(Order $order, User $courier): Order
+    {
+        abort_unless($courier->isCourier() || $courier->isAdmin(), 403);
+
+        $claimed = DB::transaction(function () use ($order, $courier) {
+            $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->status !== OrderStatus::Ready || $locked->courier_id !== null) {
+                throw new InvalidArgumentException('Cette mission n’est plus disponible.');
+            }
+
+            $locked->update(['courier_id' => $courier->id]);
+
+            return $locked->fresh(['restaurant', 'customer', 'courier']);
+        });
+
+        $this->notifier->send(
+            $claimed->delivery_phone,
+            sprintf('SynoriaEats : un livreur a pris ta commande %s.', $claimed->number)
+        );
+
+        if ($courier->phone) {
+            $this->notifier->send(
+                $courier->phone,
+                sprintf(
+                    'SynoriaEats : mission %s acceptée — %s, %s.',
+                    $claimed->number,
+                    $claimed->restaurant->name,
+                    $claimed->restaurant->address
+                )
+            );
+        }
+
+        return $claimed;
+    }
+
+    public function startDelivery(Order $order, User $courier): Order
+    {
+        $this->assertAssignedCourier($order, $courier);
+        $this->assertValidTransition($order->status, OrderStatus::OutForDelivery);
+
+        $previous = $order->status;
+        $order->update(['status' => OrderStatus::OutForDelivery]);
+
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+
+        return $order->fresh();
+    }
+
+    public function completeDelivery(Order $order, User $courier): Order
+    {
+        $this->assertAssignedCourier($order, $courier);
+        $this->assertValidTransition($order->status, OrderStatus::Delivered);
+
+        $previous = $order->status;
+
+        DB::transaction(function () use ($order, $courier) {
+            $order->update([
+                'status' => OrderStatus::Delivered,
+                'delivered_at' => now(),
+            ]);
+
+            User::query()->whereKey($courier->id)->increment('delivery_count');
+        });
+
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+
+        return $order->fresh();
+    }
+
+    public function updateCourierLocation(Order $order, User $courier, float $lat, float $lng): Order
+    {
+        $this->assertAssignedCourier($order, $courier);
+
+        if (! in_array($order->status, [OrderStatus::Ready, OrderStatus::OutForDelivery], true)) {
+            throw new InvalidArgumentException('Position non mise à jour pour ce statut.');
+        }
+
+        $order->update([
+            'courier_lat' => $lat,
+            'courier_lng' => $lng,
+        ]);
 
         return $order->fresh();
     }
@@ -117,6 +216,18 @@ class OrderService
 
         abort_unless(
             $actor->isRestaurantOwner() && $order->restaurant->owner_id === $actor->id,
+            403
+        );
+    }
+
+    private function assertAssignedCourier(Order $order, User $courier): void
+    {
+        if ($courier->isAdmin()) {
+            return;
+        }
+
+        abort_unless(
+            $courier->isCourier() && $order->courier_id === $courier->id,
             403
         );
     }

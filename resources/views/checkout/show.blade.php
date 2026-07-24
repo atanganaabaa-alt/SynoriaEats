@@ -8,7 +8,7 @@
 
     <div class="py-8">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 grid gap-6 lg:grid-cols-2">
-            <form method="POST" action="{{ route('checkout.store') }}" class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4">
+            <form method="POST" action="{{ route('checkout.store') }}" class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4" id="checkout-form">
                 @csrf
 
                 <x-input-error :messages="$errors->get('checkout')" class="mb-2" />
@@ -25,6 +25,25 @@
                     <x-text-input id="delivery_phone" name="delivery_phone" class="block mt-1 w-full"
                                   :value="old('delivery_phone', auth()->user()->phone)" required />
                     <x-input-error :messages="$errors->get('delivery_phone')" class="mt-2" />
+                </div>
+
+                <div class="rounded-md border border-dashed border-gray-300 p-3 space-y-2">
+                    <p class="text-sm font-medium text-gray-800">Position GPS (optionnel)</p>
+                    <p class="text-xs text-gray-500">Permet d’ajuster les frais selon la distance au restaurant.</p>
+                    <input type="hidden" name="delivery_lat" id="delivery_lat" value="{{ old('delivery_lat', $deliveryLat) }}">
+                    <input type="hidden" name="delivery_lng" id="delivery_lng" value="{{ old('delivery_lng', $deliveryLng) }}">
+                    <button type="button" id="use-location"
+                            class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50">
+                        Utiliser ma position
+                    </button>
+                    <p id="geo-status" class="text-xs text-gray-500">
+                        @if ($deliveryLat && $deliveryLng)
+                            Position : {{ number_format($deliveryLat, 5) }}, {{ number_format($deliveryLng, 5) }}
+                            @if ($distanceKm !== null)
+                                · ~{{ $distanceKm }} km
+                            @endif
+                        @endif
+                    </p>
                 </div>
 
                 <div>
@@ -70,4 +89,27 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('use-location')?.addEventListener('click', () => {
+            const status = document.getElementById('geo-status');
+            if (!navigator.geolocation) {
+                status.textContent = 'Géolocalisation non supportée.';
+                return;
+            }
+            status.textContent = 'Récupération…';
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                document.getElementById('delivery_lat').value = lat;
+                document.getElementById('delivery_lng').value = lng;
+                const url = new URL(window.location.href);
+                url.searchParams.set('delivery_lat', lat);
+                url.searchParams.set('delivery_lng', lng);
+                window.location = url.toString();
+            }, () => {
+                status.textContent = 'Impossible d’obtenir la position.';
+            });
+        });
+    </script>
 </x-app-layout>

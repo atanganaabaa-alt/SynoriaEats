@@ -21,6 +21,8 @@ class PlaceOrderRequest extends FormRequest
         return [
             'delivery_address' => ['required', 'string', 'max:255'],
             'delivery_phone' => ['required', 'string', 'max:30'],
+            'delivery_lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'delivery_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'payment_method' => ['required', Rule::in([
                 PaymentMethod::OrangeMoney->value,
                 PaymentMethod::MtnMomo->value,

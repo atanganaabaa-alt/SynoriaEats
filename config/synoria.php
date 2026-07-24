@@ -13,4 +13,9 @@ return [
         'channels' => env('SYNORIA_NOTIFICATION_CHANNELS', 'log'),
     ],
 
+    'delivery' => [
+        'fee_per_km' => (int) env('SYNORIA_DELIVERY_FEE_PER_KM', 200),
+        'min_fee' => (int) env('SYNORIA_DELIVERY_MIN_FEE', 0),
+    ],
+
 ];

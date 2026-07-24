@@ -92,4 +92,19 @@ Pour WhatsApp sandbox Twilio, le client doit d’abord envoyer « join … » au
 2. Menu **Mon resto** → **Créer mon restaurant**
 3. Sur la fiche restaurant : formulaire **Ajouter un plat au menu**
 
-Prochain : **Sprint 3** — livraison, suivi temps réel, évaluations.
+## Sprint 3 — livré
+
+Livraison (missions livreur), suivi GPS (polling), frais selon distance, notations resto/livreur.
+
+Parcours :
+1. Restaurateur marque la commande **Prête**
+2. Livreur → **Missions** → prendre → récupérer → livrer (+ partage GPS)
+3. Client suit le statut / position sur la fiche commande
+4. Après livraison → noter resto + livreur
+
+```env
+SYNORIA_DELIVERY_FEE_PER_KM=200
+SYNORIA_DELIVERY_MIN_FEE=0
+```
+
+Prochain : **Sprint 4** — back-office admin, commissions, déploiement.

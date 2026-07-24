@@ -47,15 +47,15 @@ Commander, payer, resto gère en temps réel.
 
 ---
 
-## Sprint 3 — Livraison et évaluations
+## Sprint 3 — Livraison et évaluations ✅
 **20 Juillet → 03 Août**
 
-- Attribution livreur
-- Interface livreur (missions, livraison)
-- Suivi statut temps réel
-- Géoloc / frais livraison
+- Attribution livreur (claim mission)
+- Interface livreur (missions, GPS, livraison)
+- Suivi statut (polling JSON côté client)
+- Géoloc / frais livraison (base resto + FCFA/km)
 - Notation resto + livreur
-- Notifications de statut
+- Notifications de statut (client, resto, livreur)
 
 ### Résultat visible
 Chaîne complète commande → livraison + notes.

@@ -95,6 +95,17 @@ class CartService
         return $this->cart()['restaurant_id'];
     }
 
+    public function restaurant(): ?\App\Models\Restaurant
+    {
+        $restaurantId = $this->restaurantId();
+
+        if (! $restaurantId) {
+            return null;
+        }
+
+        return \App\Models\Restaurant::query()->find($restaurantId);
+    }
+
     /**
      * @return Collection<int, array{menu_item: MenuItem, quantity: int, line_total: int}>
      */
@@ -135,15 +146,15 @@ class CartService
         return (int) $this->lines()->sum('line_total');
     }
 
-    public function deliveryFee(): int
+    public function deliveryFee(?float $deliveryLat = null, ?float $deliveryLng = null): int
     {
-        $restaurantId = $this->restaurantId();
+        $restaurant = $this->restaurant();
 
-        if (! $restaurantId) {
+        if (! $restaurant) {
             return 0;
         }
 
-        return (int) (\App\Models\Restaurant::query()->find($restaurantId)?->delivery_fee ?? 0);
+        return app(DeliveryFeeCalculator::class)->forRestaurant($restaurant, $deliveryLat, $deliveryLng);
     }
 
     public function total(): int

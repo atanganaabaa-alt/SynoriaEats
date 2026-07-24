@@ -3,12 +3,14 @@
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Courier\MissionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController as OwnerRestaurantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RestaurantController;
+use App\Http\Controllers\ReviewController;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Route;
 
@@ -27,7 +29,7 @@ Route::get('/dashboard', function () {
 
     return match ($user?->role) {
         UserRole::RestaurantOwner => redirect()->route('owner.restaurants.index'),
-        UserRole::Courier => redirect()->route('restaurants.index'),
+        UserRole::Courier => redirect()->route('courier.missions.index'),
         UserRole::Admin => redirect()->route('restaurants.index'),
         default => redirect()->route('restaurants.index'),
     };
@@ -44,10 +46,21 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/tracking', [OrderController::class, 'tracking'])->name('orders.tracking');
+    Route::post('/orders/{order}/reviews', [ReviewController::class, 'store'])->name('orders.reviews.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::middleware('role:courier,admin')->prefix('courier')->name('courier.')->group(function () {
+        Route::get('missions', [MissionController::class, 'index'])->name('missions.index');
+        Route::get('missions/{order}', [MissionController::class, 'show'])->name('missions.show');
+        Route::post('missions/{order}/claim', [MissionController::class, 'claim'])->name('missions.claim');
+        Route::post('missions/{order}/pickup', [MissionController::class, 'pickup'])->name('missions.pickup');
+        Route::post('missions/{order}/deliver', [MissionController::class, 'deliver'])->name('missions.deliver');
+        Route::post('missions/{order}/location', [MissionController::class, 'location'])->name('missions.location');
+    });
 
     Route::middleware('role:restaurant_owner,admin')->prefix('owner')->name('owner.')->group(function () {
         Route::get('orders', [OwnerOrderController::class, 'index'])->name('orders.index');
