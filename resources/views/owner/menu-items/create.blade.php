@@ -16,7 +16,7 @@
                         </ul>
                     </div>
                 @endif
-                @include('owner.menu-items._form')
+                @include('owner.menu-items._form', ['categories' => $categories ?? \App\Enums\MenuCategory::cases()])
                 <x-primary-button>Ajouter</x-primary-button>
             </form>
         </div>

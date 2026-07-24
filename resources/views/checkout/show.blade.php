@@ -84,6 +84,21 @@
                 <div class="space-y-1 text-sm border-t border-gray-100 pt-3">
                     <div class="flex justify-between"><span>Sous-total</span><span>{{ number_format($subtotal, 0, ',', ' ') }} FCFA</span></div>
                     <div class="flex justify-between"><span>Livraison</span><span>{{ number_format($deliveryFee, 0, ',', ' ') }} FCFA</span></div>
+                    @if ($distanceKm !== null)
+                        <p class="text-xs text-gray-500">Distance ~{{ $distanceKm }} km
+                            @if ($deliveryZone) · zone {{ str_replace('_', ' ', $deliveryZone) }} @endif
+                        </p>
+                    @endif
+                    @if (! empty($feeBreakdown) && count($feeBreakdown) > 1)
+                        <ul class="text-xs text-gray-500 space-y-0.5 pt-1">
+                            @foreach ($feeBreakdown as $label => $amount)
+                                <li class="flex justify-between">
+                                    <span>{{ str_replace('_', ' ', $label) }}</span>
+                                    <span>{{ $amount >= 0 ? '+' : '' }}{{ number_format($amount, 0, ',', ' ') }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                     <div class="flex justify-between font-semibold text-base"><span>Total</span><span>{{ number_format($total, 0, ',', ' ') }} FCFA</span></div>
                 </div>
             </div>

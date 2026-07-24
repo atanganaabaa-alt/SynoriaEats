@@ -7,12 +7,14 @@ use App\Http\Requests\StoreMenuItemRequest;
 use App\Http\Requests\UpdateMenuItemRequest;
 use App\Models\MenuItem;
 use App\Models\Restaurant;
+use App\Services\CloudinaryUploader;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class MenuItemController extends Controller
 {
+    public function __construct(private CloudinaryUploader $media) {}
+
     public function index(Restaurant $restaurant): JsonResponse
     {
         return response()->json(
@@ -22,12 +24,10 @@ class MenuItemController extends Controller
 
     public function store(StoreMenuItemRequest $request, Restaurant $restaurant): JsonResponse
     {
-        $data = $request->safe()->except(['photo']);
-        $data['restaurant_id'] = $restaurant->id;
-        $data['is_available'] = $request->boolean('is_available', true);
+        $data = $request->menuItemAttributes($restaurant);
 
         if ($request->hasFile('photo')) {
-            $data['photo_url'] = $request->file('photo')->store('menu-items', 'public');
+            $data['photo_url'] = $this->media->upload($request->file('photo'), 'menu-items');
         }
 
         $item = MenuItem::query()->create($data);
@@ -41,10 +41,8 @@ class MenuItemController extends Controller
         $data['is_available'] = $request->boolean('is_available');
 
         if ($request->hasFile('photo')) {
-            if ($menuItem->photo_url) {
-                Storage::disk('public')->delete($menuItem->photo_url);
-            }
-            $data['photo_url'] = $request->file('photo')->store('menu-items', 'public');
+            $this->media->deleteIfLocal($menuItem->photo_url);
+            $data['photo_url'] = $this->media->upload($request->file('photo'), 'menu-items');
         }
 
         $menuItem->update($data);
@@ -60,6 +58,7 @@ class MenuItemController extends Controller
             403
         );
 
+        $this->media->deleteIfLocal($menuItem->photo_url);
         $menuItem->delete();
 
         return response()->json(null, 204);

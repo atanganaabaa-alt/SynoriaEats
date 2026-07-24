@@ -15,7 +15,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen bg-gray-100" @auth x-data="liveToasts()" x-init="start()" @endauth>
             @include('layouts.navigation')
 
             <!-- Page Heading -->
@@ -31,6 +31,52 @@
             <main>
                 {{ $slot }}
             </main>
+
+            @auth
+                <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 max-w-[calc(100vw-2rem)]" aria-live="polite">
+                    <template x-for="toast in toasts" :key="toast.id">
+                        <a :href="toast.url"
+                           class="block rounded-lg bg-gray-900 text-white shadow-lg px-4 py-3 text-sm hover:bg-gray-800 transition"
+                           @click="dismiss(toast.id)">
+                            <p class="font-semibold" x-text="toast.title"></p>
+                            <p class="text-gray-300 mt-0.5" x-text="toast.body"></p>
+                        </a>
+                    </template>
+                </div>
+            @endauth
         </div>
+
+        @auth
+            <script>
+                function liveToasts() {
+                    return {
+                        toasts: [],
+                        timer: null,
+                        start() {
+                            this.poll();
+                            this.timer = setInterval(() => this.poll(), 4000);
+                        },
+                        async poll() {
+                            try {
+                                const res = await fetch(@json(route('notifications.poll')), {
+                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    credentials: 'same-origin',
+                                });
+                                if (!res.ok) return;
+                                const data = await res.json();
+                                (data.notifications || []).forEach((n) => {
+                                    this.toasts.unshift(n);
+                                    setTimeout(() => this.dismiss(n.id), 8000);
+                                });
+                                this.toasts = this.toasts.slice(0, 5);
+                            } catch (e) {}
+                        },
+                        dismiss(id) {
+                            this.toasts = this.toasts.filter((t) => t.id !== id);
+                        },
+                    };
+                }
+            </script>
+        @endauth
     </body>
 </html>

@@ -29,7 +29,7 @@
                 Commande tes repas. SynoriaEats s’occupe de la livraison.
             </h1>
             <p class="mt-5 max-w-xl text-lg text-gray-600">
-                L’app livraison de la suite Synoria — restos près de chez toi, menu clair, compte sécurisé.
+                L’app livraison de la suite Synoria : restos près de chez toi, menu clair, compte sécurisé.
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
                 <a href="{{ route('restaurants.index') }}" class="inline-flex items-center rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">

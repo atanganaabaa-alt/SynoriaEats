@@ -154,7 +154,12 @@ class CartService
             return 0;
         }
 
-        return app(DeliveryFeeCalculator::class)->forRestaurant($restaurant, $deliveryLat, $deliveryLng);
+        return app(DeliveryFeeCalculator::class)->forRestaurant(
+            $restaurant,
+            $deliveryLat,
+            $deliveryLng,
+            $this->subtotal()
+        );
     }
 
     public function total(): int

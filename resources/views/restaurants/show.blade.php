@@ -13,12 +13,15 @@
                 <p class="text-gray-600">{{ $restaurant->description }}</p>
                 <p class="mt-3 text-sm text-gray-400">
                     {{ $restaurant->prep_time_min }}–{{ $restaurant->prep_time_max }} min ·
-                    Frais de livraison {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA ·
+                    Frais de base {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA (ajustés à la distance au checkout) ·
                     {{ $restaurant->opening_hours }}
                 </p>
             </div>
 
-            @php $grouped = $restaurant->menuItems->groupBy('category'); @endphp
+            @php
+                $order = ['Plats', 'Accompagnements', 'Boissons', 'Desserts'];
+                $grouped = $restaurant->menuItems->groupBy('category')->sortBy(fn ($items, $cat) => array_search($cat, $order, true) === false ? 99 : array_search($cat, $order, true));
+            @endphp
 
             @forelse ($grouped as $category => $items)
                 <section class="bg-white shadow-sm sm:rounded-lg p-6">
@@ -26,12 +29,18 @@
                     <ul class="divide-y divide-gray-100">
                         @foreach ($items as $item)
                             <li class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <p class="font-medium text-gray-900">{{ $item->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ $item->description }}</p>
-                                    <p class="font-semibold text-emerald-700 mt-1">
-                                        {{ number_format($item->price, 0, ',', ' ') }} FCFA
-                                    </p>
+                                <div class="flex gap-3">
+                                    @if ($item->photo_url)
+                                        <img src="{{ str_starts_with($item->photo_url, 'http') ? $item->photo_url : asset('storage/'.$item->photo_url) }}"
+                                             alt="" class="h-16 w-16 rounded object-cover shrink-0">
+                                    @endif
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ $item->name }}</p>
+                                        <p class="text-sm text-gray-500">{{ $item->description }}</p>
+                                        <p class="font-semibold text-emerald-700 mt-1">
+                                            {{ number_format($item->price, 0, ',', ' ') }} FCFA
+                                        </p>
+                                    </div>
                                 </div>
                                 @auth
                                     @if ($item->is_available)

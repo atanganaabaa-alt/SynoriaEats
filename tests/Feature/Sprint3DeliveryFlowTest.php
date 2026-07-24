@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Restaurant;
 use App\Models\User;
 use App\Services\DeliveryFeeCalculator;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -118,10 +119,14 @@ class Sprint3DeliveryFlowTest extends TestCase
             'longitude' => 11.5021,
         ]);
 
-        $fee = $calculator->forRestaurant($restaurant, 3.8900, 11.5200);
+        $at = Carbon::parse('2026-01-15 10:00:00');
+        $fee = $calculator->forRestaurant($restaurant, 3.8900, 11.5200, 0, $at);
 
         $this->assertGreaterThan(500, $fee);
-        $this->assertSame(500, $calculator->forRestaurant($restaurant, null, null));
+        $this->assertSame(500, $calculator->forRestaurant($restaurant, null, null, 0, $at));
+
+        $quote = $calculator->quote($restaurant, 3.8900, 11.5200, 1500, $at);
+        $this->assertArrayHasKey('breakdown', $quote);
     }
 
     public function test_customer_cannot_claim_mission(): void

@@ -43,9 +43,17 @@ return [
 
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID', env('TWILIO_SID')),
-        'token' => env('TWILIO_AUTH_TOKEN', env('TWILIO_AUTH_TOKEN')),
+        'token' => env('TWILIO_AUTH_TOKEN'),
         'sms_from' => env('TWILIO_SMS_FROM', env('TWILIO_FROM')),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', '14155238886'),
+    ],
+
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'key' => env('CLOUDINARY_API_KEY'),
+        'secret' => env('CLOUDINARY_API_SECRET'),
+        'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET'),
+        'folder' => env('CLOUDINARY_FOLDER', 'synoriaeats'),
     ],
 
     'orange_money' => [

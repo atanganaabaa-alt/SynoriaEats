@@ -57,6 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/notifications/poll', [\App\Http\Controllers\LiveNotificationController::class, 'poll'])
+        ->name('notifications.poll');
+
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', AdminDashboardController::class)->name('dashboard');
         Route::get('users', [AdminUserController::class, 'index'])->name('users.index');

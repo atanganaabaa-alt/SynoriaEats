@@ -30,27 +30,21 @@ class CheckoutController extends Controller
 
         $deliveryLat = $request->filled('delivery_lat') ? (float) $request->input('delivery_lat') : null;
         $deliveryLng = $request->filled('delivery_lng') ? (float) $request->input('delivery_lng') : null;
-        $deliveryFee = $fees->forRestaurant($restaurant, $deliveryLat, $deliveryLng);
-        $distanceKm = null;
-
-        if ($deliveryLat !== null && $deliveryLng !== null
-            && $restaurant->latitude !== null && $restaurant->longitude !== null) {
-            $distanceKm = $fees->distanceKm(
-                (float) $restaurant->latitude,
-                (float) $restaurant->longitude,
-                $deliveryLat,
-                $deliveryLng
-            );
-        }
+        $subtotal = $cart->subtotal();
+        $quote = $fees->quote($restaurant, $deliveryLat, $deliveryLng, $subtotal);
+        $deliveryFee = $quote['fee'];
+        $distanceKm = $quote['distance_km'];
 
         return view('checkout.show', [
             'lines' => $cart->lines(),
-            'subtotal' => $cart->subtotal(),
+            'subtotal' => $subtotal,
             'deliveryFee' => $deliveryFee,
-            'total' => $cart->subtotal() + $deliveryFee,
+            'total' => $subtotal + $deliveryFee,
             'deliveryLat' => $deliveryLat,
             'deliveryLng' => $deliveryLng,
             'distanceKm' => $distanceKm,
+            'deliveryZone' => $quote['zone'],
+            'feeBreakdown' => $quote['breakdown'],
         ]);
     }
 

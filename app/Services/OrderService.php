@@ -47,7 +47,7 @@ class OrderService
         $deliveryLat = isset($data['delivery_lat']) ? (float) $data['delivery_lat'] : null;
         $deliveryLng = isset($data['delivery_lng']) ? (float) $data['delivery_lng'] : null;
         $subtotal = $cart->subtotal();
-        $deliveryFee = $this->deliveryFees->forRestaurant($restaurant, $deliveryLat, $deliveryLng);
+        $deliveryFee = $this->deliveryFees->forRestaurant($restaurant, $deliveryLat, $deliveryLng, $subtotal);
         $commission = (int) round($subtotal * config('synoria.commission_rate', 0.10));
         $total = $subtotal + $deliveryFee;
         $paymentMethod = PaymentMethod::from($data['payment_method']);

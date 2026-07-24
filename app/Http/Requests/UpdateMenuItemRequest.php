@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\MenuCategory;
 use App\Models\MenuItem;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateMenuItemRequest extends FormRequest
 {
@@ -30,9 +32,9 @@ class UpdateMenuItemRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:2000'],
             'price' => ['required', 'integer', 'min:0'],
-            'category' => ['nullable', 'string', 'max:60'],
+            'category' => ['required', Rule::in(MenuCategory::values())],
             'is_available' => ['sometimes', 'boolean'],
-            'photo' => ['nullable', 'image', 'max:2048'],
+            'photo' => ['nullable', 'image', 'max:4096'],
         ];
     }
 
