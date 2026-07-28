@@ -116,4 +116,5 @@ php artisan synoria:admin admin@example.com 'MotDePasseFort!'
 # puis /admin
 ```
 
-Déploiement VPS : [docs/DEPLOY_VPS.md](docs/DEPLOY_VPS.md)
+Déploiement VPS : [docs/DEPLOY_VPS.md](docs/DEPLOY_VPS.md)  
+Déploiement **o2switch** (1ʳᵉ version) : [docs/DEPLOY_O2SWITCH.md](docs/DEPLOY_O2SWITCH.md)
