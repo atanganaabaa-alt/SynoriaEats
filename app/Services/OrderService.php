@@ -75,8 +75,8 @@ class OrderService
             foreach ($lines as $line) {
                 $order->items()->create([
                     'menu_item_id' => $line['menu_item']->id,
-                    'name' => $line['menu_item']->name,
-                    'unit_price' => $line['menu_item']->price,
+                    'name' => $line['name'] ?? $line['menu_item']->name,
+                    'unit_price' => (int) $line['unit_price'],
                     'quantity' => $line['quantity'],
                 ]);
             }

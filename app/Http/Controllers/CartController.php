@@ -25,12 +25,20 @@ class CartController extends Controller
         $validated = $request->validate([
             'menu_item_id' => ['required', 'exists:menu_items,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'accompaniment_ids' => ['nullable', 'array'],
+            'accompaniment_ids.*' => ['integer', 'min:1', 'exists:menu_items,id'],
         ]);
 
         $menuItem = MenuItem::query()->findOrFail($validated['menu_item_id']);
 
         try {
-            $cart->add($menuItem, $validated['quantity'] ?? 1);
+            $accompanimentIds = $validated['accompaniment_ids'] ?? [];
+
+            if ($menuItem->category === \App\Enums\MenuCategory::Plats->value && $accompanimentIds !== []) {
+                $cart->addDishWithAccompaniments($menuItem, $validated['quantity'] ?? 1, $accompanimentIds);
+            } else {
+                $cart->add($menuItem, $validated['quantity'] ?? 1);
+            }
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['menu_item_id' => $e->getMessage()]);
         }
@@ -40,13 +48,13 @@ class CartController extends Controller
             ->with('status', 'Plat ajouté au panier.');
     }
 
-    public function update(Request $request, MenuItem $menuItem, CartService $cart): RedirectResponse
+    public function update(Request $request, string $lineKey, CartService $cart): RedirectResponse
     {
         $validated = $request->validate([
             'quantity' => ['required', 'integer', 'min:0', 'max:20'],
         ]);
 
-        $cart->updateQuantity($menuItem->id, $validated['quantity']);
+        $cart->updateQuantity($lineKey, (int) $validated['quantity']);
 
         return redirect()->route('cart.show')->with('status', 'Panier mis à jour.');
     }

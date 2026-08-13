@@ -15,7 +15,7 @@
 
             <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-2 text-sm">
                 <p><span class="text-gray-500">Statut :</span> <strong>{{ $order->status->label() }}</strong></p>
-                <p><span class="text-gray-500">Restaurant :</span> {{ $order->restaurant->name }} — {{ $order->restaurant->address }}</p>
+                <p><span class="text-gray-500">Restaurant:</span> {{ $order->restaurant->name }}, {{ $order->restaurant->address }}</p>
                 <p><span class="text-gray-500">Client :</span> {{ $order->customer->name }} ({{ $order->delivery_phone }})</p>
                 <p><span class="text-gray-500">Adresse :</span> {{ $order->delivery_address }}</p>
                 @if ($order->courier_lat && $order->courier_lng)
@@ -48,7 +48,7 @@
                     @if ($order->status === \App\Enums\OrderStatus::Ready)
                         <form method="POST" action="{{ route('courier.missions.pickup', $order) }}">
                             @csrf
-                            <x-primary-button>J’ai récupéré la commande — démarrer la livraison</x-primary-button>
+                            <x-primary-button>J’ai récupéré la commande: démarrer la livraison</x-primary-button>
                         </form>
                     @endif
 

@@ -49,7 +49,7 @@ class RestaurantController extends Controller
 
     public function show(Request $request, Restaurant $restaurant): View
     {
-        $this->authorizeOwner($request, $restaurant);
+        $this->authorize('view', $restaurant);
 
         $restaurant->load(['menuItems' => fn ($q) => $q->latest()]);
 
@@ -58,13 +58,15 @@ class RestaurantController extends Controller
 
     public function edit(Request $request, Restaurant $restaurant): View
     {
-        $this->authorizeOwner($request, $restaurant);
+        $this->authorize('view', $restaurant);
 
         return view('owner.restaurants.edit', compact('restaurant'));
     }
 
     public function update(UpdateRestaurantRequest $request, Restaurant $restaurant): RedirectResponse
     {
+        $this->authorize('update', $restaurant);
+
         $data = $request->safe()->except(['logo', 'cover']);
         $data['is_open'] = $request->boolean('is_open');
 
@@ -91,19 +93,11 @@ class RestaurantController extends Controller
 
     public function destroy(Request $request, Restaurant $restaurant): RedirectResponse
     {
-        $this->authorizeOwner($request, $restaurant);
+        $this->authorize('delete', $restaurant);
         $restaurant->delete();
 
         return redirect()
             ->route('owner.restaurants.index')
             ->with('status', 'Restaurant supprimé.');
-    }
-
-    private function authorizeOwner(Request $request, Restaurant $restaurant): void
-    {
-        abort_unless(
-            $request->user()->isAdmin() || $restaurant->owner_id === $request->user()->id,
-            403
-        );
     }
 }

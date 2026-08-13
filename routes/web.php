@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CommissionController as AdminCommissionController;
+use App\Http\Controllers\Admin\CourierController as AdminCourierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RestaurantController as AdminRestaurantController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Courier\MissionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
+use App\Http\Controllers\Owner\OnboardingController as OwnerOnboardingController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController as OwnerRestaurantController;
 use App\Http\Controllers\ProfileController;
@@ -31,9 +33,25 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
+    if ($user?->isRestaurantOwner()) {
+        if ($user->ownedRestaurants()->doesntExist()) {
+            return redirect()->route('owner.onboarding');
+        }
+
+        if (! $user->isApproved()) {
+            return redirect()->route('owner.pending');
+        }
+
+        return redirect()->route('owner.restaurants.index');
+    }
+
+    if ($user?->isCourier()) {
+        return $user->isApproved()
+            ? redirect()->route('courier.missions.index')
+            : redirect()->route('courier.pending');
+    }
+
     return match ($user?->role) {
-        UserRole::RestaurantOwner => redirect()->route('owner.restaurants.index'),
-        UserRole::Courier => redirect()->route('courier.missions.index'),
         UserRole::Admin => redirect()->route('admin.dashboard'),
         default => redirect()->route('restaurants.index'),
     };
@@ -42,7 +60,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
-    Route::patch('/cart/{menuItem}', [CartController::class, 'update'])->name('cart.update');
+        Route::patch('/cart/line/{lineKey}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart', [CartController::class, 'destroy'])->name('cart.destroy');
 
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
@@ -65,11 +83,21 @@ Route::middleware('auth')->group(function () {
         Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
         Route::patch('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
         Route::get('restaurants', [AdminRestaurantController::class, 'index'])->name('restaurants.index');
+        Route::get('restaurants/{restaurant}', [AdminRestaurantController::class, 'show'])->name('restaurants.show');
         Route::patch('restaurants/{restaurant}', [AdminRestaurantController::class, 'update'])->name('restaurants.update');
+        Route::get('documents/{document}', [\App\Http\Controllers\Admin\RestaurantDocumentController::class, 'show'])
+            ->name('documents.show');
+        Route::get('couriers', [AdminCourierController::class, 'index'])->name('couriers.index');
+        Route::post('couriers', [AdminCourierController::class, 'store'])->name('couriers.store');
+        Route::patch('couriers/{user}', [AdminCourierController::class, 'update'])->name('couriers.update');
         Route::get('commissions', [AdminCommissionController::class, 'index'])->name('commissions.index');
     });
 
-    Route::middleware('role:courier,admin')->prefix('courier')->name('courier.')->group(function () {
+    Route::middleware('role:courier')->prefix('courier')->name('courier.')->group(function () {
+        Route::get('pending', fn () => view('courier.pending'))->name('pending');
+    });
+
+    Route::middleware(['role:courier,admin', 'approved'])->prefix('courier')->name('courier.')->group(function () {
         Route::get('missions', [MissionController::class, 'index'])->name('missions.index');
         Route::get('missions/{order}', [MissionController::class, 'show'])->name('missions.show');
         Route::post('missions/{order}/claim', [MissionController::class, 'claim'])->name('missions.claim');
@@ -78,7 +106,13 @@ Route::middleware('auth')->group(function () {
         Route::post('missions/{order}/location', [MissionController::class, 'location'])->name('missions.location');
     });
 
-    Route::middleware('role:restaurant_owner,admin')->prefix('owner')->name('owner.')->group(function () {
+    Route::middleware('role:restaurant_owner')->prefix('owner')->name('owner.')->group(function () {
+        Route::get('pending', [OwnerOnboardingController::class, 'pending'])->name('pending');
+        Route::get('onboarding', [OwnerOnboardingController::class, 'create'])->name('onboarding');
+        Route::post('onboarding', [OwnerOnboardingController::class, 'store'])->name('onboarding.store');
+    });
+
+    Route::middleware(['role:restaurant_owner,admin', 'approved'])->prefix('owner')->name('owner.')->group(function () {
         Route::get('orders', [OwnerOrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{order}', [OwnerOrderController::class, 'show'])->name('orders.show');
         Route::patch('orders/{order}', [OwnerOrderController::class, 'update'])->name('orders.update');

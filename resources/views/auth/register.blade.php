@@ -10,7 +10,7 @@
 
     @if ($googleReady)
         <div class="mb-6 space-y-3">
-            <p class="text-sm text-gray-600 text-center">Inscription rapide avec Google (choisis ton rôle, puis clique)</p>
+            <p class="text-sm text-gray-600 text-center">Inscription en un clic avec Google</p>
             <div class="grid grid-cols-1 gap-2">
                 <a href="{{ route('google.redirect', ['role' => 'customer']) }}"
                    class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -20,16 +20,13 @@
                    class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                     Google · Restaurateur
                 </a>
-                <a href="{{ route('google.redirect', ['role' => 'courier']) }}"
-                   class="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Google · Livreur
-                </a>
             </div>
-            <p class="text-center text-xs text-gray-500">ou crée un compte avec email + mot de passe</p>
+            <p class="text-center text-xs text-gray-500">Livreur : pas d’inscription libre. L’admin t’invite via un partenariat, puis tu te connectes.</p>
+            <p class="text-center text-xs text-gray-500">ou crée un compte email + mot de passe</p>
         </div>
     @endif
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" x-data="{ role: '{{ old('role', 'customer') }}' }">
         @csrf
 
         <div>
@@ -52,7 +49,7 @@
 
         <div class="mt-4">
             <x-input-label for="role" :value="__('Je suis')" />
-            <select id="role" name="role" required class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+            <select id="role" name="role" required x-model="role" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                 @foreach ($roles as $role)
                     <option value="{{ $role->value }}" @selected(old('role', 'customer') === $role->value)>
                         {{ $role->label() }}
@@ -60,6 +57,37 @@
                 @endforeach
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
+        </div>
+
+        <div class="mt-6 space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4" x-show="role === 'restaurant_owner'" x-cloak>
+            <p class="text-sm font-medium text-amber-900">Preuves de fiabilité (obligatoires)</p>
+            <p class="text-xs text-amber-800">Ton restaurant restera invisible tant qu’un admin n’a pas approuvé le dossier. Seules les URLs Cloudinary sont stockées, pas les fichiers.</p>
+
+            <div>
+                <x-input-label for="restaurant_name" value="Nom du restaurant" />
+                <x-text-input id="restaurant_name" class="block mt-1 w-full" type="text" name="restaurant_name" :value="old('restaurant_name')" />
+                <x-input-error :messages="$errors->get('restaurant_name')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="restaurant_address" value="Adresse du local" />
+                <x-text-input id="restaurant_address" class="block mt-1 w-full" type="text" name="restaurant_address" :value="old('restaurant_address')" />
+                <x-input-error :messages="$errors->get('restaurant_address')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="commerce_register" value="Registre de commerce / RCCM" />
+                <input id="commerce_register" name="commerce_register" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm">
+                <x-input-error :messages="$errors->get('commerce_register')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="identity" value="Pièce d’identité" />
+                <input id="identity" name="identity" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm">
+                <x-input-error :messages="$errors->get('identity')" class="mt-2" />
+            </div>
+            <div>
+                <x-input-label for="proof_of_address" value="Justificatif d’adresse (optionnel)" />
+                <input id="proof_of_address" name="proof_of_address" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm">
+                <x-input-error :messages="$errors->get('proof_of_address')" class="mt-2" />
+            </div>
         </div>
 
         <div class="mt-4">

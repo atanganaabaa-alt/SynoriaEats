@@ -8,7 +8,11 @@
             <form method="POST" action="{{ route('owner.menu-items.update', $menuItem) }}" enctype="multipart/form-data" class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4">
                 @csrf
                 @method('PUT')
-                @include('owner.menu-items._form', ['menuItem' => $menuItem, 'categories' => $categories])
+                @include('owner.menu-items._form', [
+                    'menuItem' => $menuItem,
+                    'categories' => $categories,
+                    'accompaniments' => $accompaniments ?? collect(),
+                ])
                 <x-primary-button>Mettre à jour</x-primary-button>
             </form>
         </div>

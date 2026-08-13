@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApprovalStatus;
 use App\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,6 +16,15 @@ class RestaurantFactory extends Factory
     /**
      * @return array<string, mixed>
      */
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Restaurant $restaurant) {
+            if (! $restaurant->is_validated) {
+                $restaurant->status = ApprovalStatus::Pending;
+            }
+        });
+    }
+
     public function definition(): array
     {
         $name = fake()->company().' Kitchen';
@@ -38,6 +48,18 @@ class RestaurantFactory extends Factory
             'longitude' => fake()->longitude(11.4, 11.6),
             'is_open' => true,
             'is_validated' => true,
+            'status' => ApprovalStatus::Approved,
+            'reviewed_at' => now(),
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_validated' => false,
+            'is_open' => false,
+            'status' => ApprovalStatus::Pending,
+            'reviewed_at' => null,
+        ]);
     }
 }

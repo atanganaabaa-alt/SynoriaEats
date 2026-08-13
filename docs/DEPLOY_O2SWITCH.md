@@ -65,7 +65,7 @@ Note l’URL finale, ex. : `https://synoriaeats.fr`
 
 1. cPanel → **Bases de données MySQL**
 2. Créer une base : `identifiant_synoria` (o2switch préfixe souvent ton user)
-3. Créer un utilisateur MySQL + mot de passe **fort**
+3. Créer un utilisateur MySQL + mot de passe **fort** (User : synoriaeats, pwd : synoriaeats@ )
 4. **Ajouter l’utilisateur à la base** avec **TOUS LES PRIVILÈGES**
 5. Noter :
    - Host : en général `localhost`
@@ -119,7 +119,7 @@ ssh -T git@github.com
 
 ---
 
-## 5. Cloner le projet (hors de public_html)
+## 5sy. Cloner le projet (hors de public_html)
 
 ```bash
 cd ~

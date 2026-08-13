@@ -12,7 +12,7 @@
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <p class="text-gray-600">{{ $restaurant->description }}</p>
                 <p class="mt-3 text-sm text-gray-400">
-                    {{ $restaurant->prep_time_min }}–{{ $restaurant->prep_time_max }} min ·
+                    {{ $restaurant->prep_time_min }} à {{ $restaurant->prep_time_max }} min,
                     Frais de base {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA (ajustés à la distance au checkout) ·
                     {{ $restaurant->opening_hours }}
                 </p>
@@ -44,11 +44,37 @@
                                 </div>
                                 @auth
                                     @if ($item->is_available)
-                                        <form method="POST" action="{{ route('cart.store') }}" class="flex items-center gap-2 shrink-0">
+                                        @php
+                                            $isDish = $item->category === \App\Enums\MenuCategory::Plats->value;
+                                            $accompOptions = $isDish ? $item->accompanimentOptions : collect();
+                                        @endphp
+
+                                        <form method="POST" action="{{ route('cart.store') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shrink-0">
                                             @csrf
                                             <input type="hidden" name="menu_item_id" value="{{ $item->id }}">
                                             <input type="number" name="quantity" value="1" min="1" max="10"
                                                    class="w-16 rounded-md border-gray-300 text-sm">
+
+                                            @if ($isDish && $accompOptions->isNotEmpty())
+                                                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                                                    <div class="text-xs text-gray-500">Accompagnements :</div>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        @foreach ($accompOptions as $accomp)
+                                                            <label class="inline-flex items-center gap-2 text-sm">
+                                                                <input type="checkbox"
+                                                                       name="accompaniment_ids[]"
+                                                                       value="{{ $accomp->id }}"
+                                                                       class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                                                <span class="text-gray-700">
+                                                                    {{ $accomp->name }}
+                                                                    ({{ (int) ($accomp->pivot->extra_price ?? 0) }} FCFA{{ ((int) ($accomp->pivot->extra_price ?? 0)) === 0 ? ' inclus' : '' }})
+                                                                </span>
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+
                                             <x-primary-button type="submit">Ajouter</x-primary-button>
                                         </form>
                                     @else

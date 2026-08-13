@@ -11,6 +11,7 @@
             <nav class="flex flex-wrap gap-2 text-sm">
                 <a href="{{ route('admin.users.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Comptes</a>
                 <a href="{{ route('admin.restaurants.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Restaurants</a>
+                <a href="{{ route('admin.couriers.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Livreurs</a>
                 <a href="{{ route('admin.commissions.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Commissions</a>
             </nav>
         </div>

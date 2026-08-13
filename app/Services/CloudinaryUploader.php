@@ -23,6 +23,8 @@ class CloudinaryUploader
 
         Log::info('Cloudinary non configuré — stockage local public.');
 
+        // Chemin relatif sur le disk public (ex. restaurant-docs/xxx.pdf).
+        // L’URL navigateur est construite via RestaurantDocument::publicUrl() ou asset('storage/…').
         return $file->store($folder, 'public');
     }
 
@@ -38,7 +40,8 @@ class CloudinaryUploader
     private function uploadToCloudinary(UploadedFile $file, string $folder): string
     {
         $cloud = config('services.cloudinary.cloud_name');
-        $endpoint = "https://api.cloudinary.com/v1_1/{$cloud}/image/upload";
+        $resource = str_contains((string) $file->getMimeType(), 'pdf') ? 'raw' : 'image';
+        $endpoint = "https://api.cloudinary.com/v1_1/{$cloud}/{$resource}/upload";
 
         $payload = [
             'folder' => trim((string) config('services.cloudinary.folder', 'synoriaeats'), '/').'/'.$folder,

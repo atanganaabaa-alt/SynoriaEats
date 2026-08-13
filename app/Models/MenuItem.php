@@ -42,4 +42,21 @@ class MenuItem extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    /**
+     * Linked accompaniment options for a dish.
+     *
+     * Pivot: `extra_price` (0 = inclus dans le prix du plat)
+     */
+    public function accompanimentOptions(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'menu_item_accompaniment_options',
+            'dish_id',
+            'accompaniment_id'
+        )->withPivot(['extra_price', 'is_available'])
+            ->wherePivot('is_available', true)
+            ->where('menu_items.is_available', true);
+    }
 }

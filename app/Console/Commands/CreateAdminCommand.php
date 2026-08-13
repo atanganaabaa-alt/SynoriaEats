@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -34,6 +35,8 @@ class CreateAdminCommand extends Command
                 'password' => $password,
                 'role' => UserRole::Admin,
                 'is_active' => true,
+                'approval_status' => ApprovalStatus::Approved,
+                'approved_at' => now(),
                 'email_verified_at' => now(),
             ]
         );

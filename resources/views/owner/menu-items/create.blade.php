@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ajouter un plat — {{ $restaurant->name }}</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ajouter un plat: {{ $restaurant->name }}</h2>
     </x-slot>
 
     <div class="py-8">
@@ -16,7 +16,10 @@
                         </ul>
                     </div>
                 @endif
-                @include('owner.menu-items._form', ['categories' => $categories ?? \App\Enums\MenuCategory::cases()])
+                @include('owner.menu-items._form', [
+                    'categories' => $categories ?? \App\Enums\MenuCategory::cases(),
+                    'accompaniments' => $accompaniments ?? collect(),
+                ])
                 <x-primary-button>Ajouter</x-primary-button>
             </form>
         </div>

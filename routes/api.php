@@ -16,7 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [ApiAuthController::class, 'me']);
     Route::post('/logout', [ApiAuthController::class, 'logout']);
 
-    Route::middleware('role:restaurant_owner,admin')->group(function () {
+    Route::middleware(['role:restaurant_owner,admin', 'approved'])->group(function () {
         Route::post('/restaurants', [ApiRestaurantController::class, 'store']);
         Route::put('/restaurants/{restaurant}', [ApiRestaurantController::class, 'update']);
         Route::post('/restaurants/{restaurant}/menu-items', [ApiMenuItemController::class, 'store']);
