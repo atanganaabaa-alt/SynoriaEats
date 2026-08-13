@@ -5,29 +5,26 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'SynoriaEats') }}</title>
+        <link rel="icon" type="image/png" href="{{ asset('images/synoria-icon.png') }}">
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100" @auth x-data="liveToasts()" x-init="start()" @endauth>
+        <div class="synoria-shell" @auth x-data="liveToasts()" x-init="start()" @endauth>
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white shadow">
+                <header class="bg-white/70 backdrop-blur-sm border-b border-synoria-yellow/25">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
             @endisset
 
-            <!-- Page Content -->
             <main>
                 {{ $slot }}
             </main>
@@ -36,10 +33,10 @@
                 <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 max-w-[calc(100vw-2rem)]" aria-live="polite">
                     <template x-for="toast in toasts" :key="toast.id">
                         <a :href="toast.url"
-                           class="block rounded-lg bg-gray-900 text-white shadow-lg px-4 py-3 text-sm hover:bg-gray-800 transition"
+                           class="block rounded-xl bg-synoria-ink text-white shadow-lg px-4 py-3 text-sm hover:bg-synoria-ink/90 transition border border-synoria-yellow/30"
                            @click="dismiss(toast.id)">
-                            <p class="font-semibold" x-text="toast.title"></p>
-                            <p class="text-gray-300 mt-0.5" x-text="toast.body"></p>
+                            <p class="font-semibold text-synoria-yellow" x-text="toast.title"></p>
+                            <p class="text-white/75 mt-0.5" x-text="toast.body"></p>
                         </a>
                     </template>
                 </div>

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,6 +29,7 @@ class UserFactory extends Factory
             'rating' => 0,
             'delivery_count' => 0,
             'is_active' => true,
+            'approval_status' => ApprovalStatus::Approved,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -52,6 +54,8 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::RestaurantOwner,
+            'approval_status' => ApprovalStatus::Approved,
+            'approved_at' => now(),
         ]);
     }
 
@@ -59,6 +63,9 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => UserRole::Courier,
+            'approval_status' => ApprovalStatus::Approved,
+            'partner_name' => 'Partenaire test',
+            'approved_at' => now(),
         ]);
     }
 }

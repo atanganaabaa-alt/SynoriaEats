@@ -1,3 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --synoria-yellow: #fcd530;
+    --synoria-green: #63a03a;
+    --synoria-ink: #1d242b;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer base {
+    body {
+        color: var(--synoria-ink);
+        background-color: #fffdf3;
+    }
+}
+
+@layer components {
+    .synoria-shell {
+        @apply min-h-screen relative text-synoria-ink;
+        background-image: theme('backgroundImage.synoria-glow');
+        background-attachment: fixed;
+    }
+
+    .synoria-shell::before {
+        content: '';
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.055;
+        background-image: url('/images/synoria-bg.svg');
+        background-repeat: repeat;
+        background-size: 380px 380px;
+    }
+
+    .synoria-shell > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .synoria-panel {
+        @apply bg-white/90 backdrop-blur-sm border border-synoria-yellow/40 shadow-sm;
+    }
+
+    .synoria-nav {
+        @apply bg-white/90 backdrop-blur-md border-b border-synoria-yellow/50;
+    }
+
+    .synoria-hero-glow {
+        background:
+            radial-gradient(circle at 30% 20%, rgba(252, 213, 48, 0.55), transparent 45%),
+            radial-gradient(circle at 80% 70%, rgba(99, 160, 58, 0.18), transparent 40%);
+    }
+}

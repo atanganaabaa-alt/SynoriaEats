@@ -5,12 +5,30 @@
                 <a href="{{ route('owner.restaurants.index') }}" class="text-sm text-emerald-700 hover:underline">← Mes restaurants</a>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $restaurant->name }}</h2>
             </div>
-            <a href="{{ route('owner.restaurants.edit', $restaurant) }}" class="px-3 py-2 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50">Modifier le restaurant</a>
+            @can('update', $restaurant)
+                <a href="{{ route('owner.restaurants.edit', $restaurant) }}" class="px-3 py-2 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50">
+                    Modifier cadre / infos
+                </a>
+            @endcan
         </div>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if (! $restaurant->isApproved())
+                <div class="bg-amber-50 text-amber-900 px-4 py-3 rounded-md text-sm">
+                    Dossier <strong>{{ $restaurant->status->label() }}</strong>.
+                    Tu peux consulter cette page, mais l’ajout de plats / boissons / cadre (logo & couverture) reste bloqué jusqu’à l’approbation admin.
+                    @if ($restaurant->rejection_reason)
+                        <br>Motif : {{ $restaurant->rejection_reason }}
+                    @endif
+                </div>
+            @else
+                <div class="bg-emerald-50 text-emerald-900 px-4 py-3 rounded-md text-sm">
+                    Restaurant approuvé: tu peux remplir le menu, uploader les photos et le cadre (logo, couverture).
+                </div>
+            @endif
+
             @if (session('status'))
                 <div class="bg-emerald-50 text-emerald-800 px-4 py-3 rounded-md text-sm">{{ session('status') }}</div>
             @endif
@@ -28,17 +46,18 @@
             <div class="bg-white shadow-sm sm:rounded-lg p-6 text-sm text-gray-600 space-y-1">
                 <p>{{ $restaurant->address }}</p>
                 <p>{{ $restaurant->category }} · {{ $restaurant->opening_hours }}</p>
-                <p>Livraison de base {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA · {{ $restaurant->prep_time_min }}–{{ $restaurant->prep_time_max }} min</p>
+                <p>Livraison de base {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA, {{ $restaurant->prep_time_min }} à {{ $restaurant->prep_time_max }} min</p>
                 @if ($restaurant->menuItems->isEmpty())
                     <p class="text-amber-700">Ajoute plats, boissons ou accompagnements pour apparaître au catalogue.</p>
                 @elseif (! $restaurant->is_validated)
-                    <p class="text-amber-700">En attente de validation admin — pas encore visible au catalogue.</p>
+                    <p class="text-amber-700">En attente de validation admin: pas encore visible au catalogue.</p>
                 @elseif ($restaurant->is_open)
                     <p class="text-emerald-700">Visible dans le catalogue client.</p>
                 @endif
                 <p><a href="{{ route('restaurants.show', $restaurant) }}" class="text-emerald-700 hover:underline">Voir la page publique</a></p>
             </div>
 
+            @can('update', $restaurant)
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="font-semibold text-gray-900 mb-4">Ajouter au menu</h3>
                 <form method="POST" action="{{ route('owner.menu-items.store', $restaurant) }}" enctype="multipart/form-data" class="space-y-4">
@@ -49,6 +68,7 @@
                     </div>
                 </form>
             </div>
+            @endcan
 
             @php
                 $order = ['Plats', 'Accompagnements', 'Boissons', 'Desserts'];
@@ -93,7 +113,7 @@
 
             @if ($restaurant->menuItems->isEmpty())
                 <div class="bg-white shadow-sm sm:rounded-lg p-8 text-center text-gray-500">
-                    Aucun article — ajoute des plats, boissons ou accompagnements.
+                    Aucun article: ajoute des plats, boissons ou accompagnements.
                 </div>
             @endif
         </div>

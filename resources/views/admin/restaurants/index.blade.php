@@ -17,10 +17,11 @@
             <form method="GET" class="bg-white shadow-sm sm:rounded-lg p-4 flex flex-col gap-3 sm:flex-row">
                 <input type="search" name="q" value="{{ request('q') }}" placeholder="Nom ou adresse…"
                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                <select name="validated" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-                    <option value="">Tous</option>
-                    <option value="0" @selected(request('validated') === '0')>À valider</option>
-                    <option value="1" @selected(request('validated') === '1')>Validés</option>
+                <select name="status" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    <option value="">Tous statuts</option>
+                    <option value="pending" @selected(request('status') === 'pending')>En attente</option>
+                    <option value="approved" @selected(request('status') === 'approved')>Approuvés</option>
+                    <option value="rejected" @selected(request('status') === 'rejected')>Rejetés</option>
                 </select>
                 <x-primary-button>Filtrer</x-primary-button>
             </form>
@@ -33,29 +34,17 @@
                             <p class="text-sm text-gray-500">{{ $restaurant->address }}</p>
                             <p class="text-sm text-gray-500">
                                 {{ $restaurant->owner->name }} · {{ $restaurant->menu_items_count }} plats ·
-                                <span class="{{ $restaurant->is_validated ? 'text-emerald-700' : 'text-amber-600' }}">
-                                    {{ $restaurant->is_validated ? 'Validé' : 'En attente' }}
+                                {{ $restaurant->documents->count() }} justificatif(s) ·
+                                <span class="{{ $restaurant->status->value === 'approved' ? 'text-emerald-700' : ($restaurant->status->value === 'rejected' ? 'text-red-700' : 'text-amber-600') }}">
+                                    {{ $restaurant->status->label() }}
                                 </span>
-                                · {{ $restaurant->is_open ? 'Ouvert' : 'Fermé' }}
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <form method="POST" action="{{ route('admin.restaurants.update', $restaurant) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="is_validated" value="{{ $restaurant->is_validated ? 0 : 1 }}">
-                                <button class="px-3 py-1.5 text-sm rounded-md {{ $restaurant->is_validated ? 'bg-amber-100 text-amber-800' : 'bg-emerald-600 text-white' }}">
-                                    {{ $restaurant->is_validated ? 'Retirer validation' : 'Valider' }}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('admin.restaurants.update', $restaurant) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="is_open" value="{{ $restaurant->is_open ? 0 : 1 }}">
-                                <button class="px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50">
-                                    {{ $restaurant->is_open ? 'Fermer' : 'Ouvrir' }}
-                                </button>
-                            </form>
+                            <a href="{{ route('admin.restaurants.show', $restaurant) }}"
+                               class="px-3 py-1.5 text-sm rounded-md {{ $restaurant->status->value === 'pending' ? 'bg-emerald-600 text-white' : 'border border-gray-300 bg-white hover:bg-gray-50' }}">
+                                {{ $restaurant->status->value === 'pending' ? 'Vérifier le dossier' : 'Ouvrir le dossier' }}
+                            </a>
                         </div>
                     </div>
                 @empty

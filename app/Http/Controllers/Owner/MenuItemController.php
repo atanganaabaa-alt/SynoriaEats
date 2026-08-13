@@ -12,6 +12,7 @@ use App\Services\CloudinaryUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class MenuItemController extends Controller
 {
@@ -21,9 +22,15 @@ class MenuItemController extends Controller
     {
         $this->authorizeOwner($request, $restaurant);
 
+        $accompaniments = $restaurant->menuItems()
+            ->where('category', MenuCategory::Accompagnements->value)
+            ->orderBy('name')
+            ->get();
+
         return view('owner.menu-items.create', [
             'restaurant' => $restaurant,
             'categories' => MenuCategory::cases(),
+            'accompaniments' => $accompaniments,
         ]);
     }
 
@@ -35,7 +42,9 @@ class MenuItemController extends Controller
             $data['photo_url'] = $this->media->upload($request->file('photo'), 'menu-items');
         }
 
-        MenuItem::query()->create($data);
+        $menuItem = MenuItem::query()->create($data);
+
+        $this->syncAccompanimentsFromRequest($request, $menuItem, $restaurant);
 
         return redirect()
             ->route('owner.restaurants.show', $restaurant)
@@ -44,13 +53,19 @@ class MenuItemController extends Controller
 
     public function edit(Request $request, MenuItem $menuItem): View
     {
-        $menuItem->load('restaurant');
+        $menuItem->load(['restaurant', 'accompanimentOptions']);
         $this->authorizeOwner($request, $menuItem->restaurant);
+
+        $accompaniments = $menuItem->restaurant->menuItems()
+            ->where('category', MenuCategory::Accompagnements->value)
+            ->orderBy('name')
+            ->get();
 
         return view('owner.menu-items.edit', [
             'restaurant' => $menuItem->restaurant,
             'menuItem' => $menuItem,
             'categories' => MenuCategory::cases(),
+            'accompaniments' => $accompaniments,
         ]);
     }
 
@@ -70,6 +85,9 @@ class MenuItemController extends Controller
         }
 
         $menuItem->update($data);
+
+        $menuItem->refresh();
+        $this->syncAccompanimentsFromRequest($request, $menuItem, $menuItem->restaurant);
 
         return redirect()
             ->route('owner.restaurants.show', $menuItem->restaurant)
@@ -92,9 +110,49 @@ class MenuItemController extends Controller
 
     private function authorizeOwner(Request $request, Restaurant $restaurant): void
     {
-        abort_unless(
-            $request->user()->isAdmin() || $restaurant->owner_id === $request->user()->id,
-            403
-        );
+        abort_unless($request->user()->can('update', $restaurant), 403);
+    }
+
+    private function syncAccompanimentsFromRequest(Request $request, MenuItem $menuItem, Restaurant $restaurant): void
+    {
+        // Seuls les "Plats" peuvent avoir des accompagnements liés.
+        if ($menuItem->category !== MenuCategory::Plats->value) {
+            $menuItem->accompanimentOptions()->detach();
+            return;
+        }
+
+        $accompanimentIds = $request->input('accompaniment_option_ids', []);
+        if (! is_array($accompanimentIds)) {
+            $accompanimentIds = [];
+        }
+
+        $extraPrices = $request->input('accompaniment_option_extra_prices', []);
+        if (! is_array($extraPrices)) {
+            $extraPrices = [];
+        }
+
+        if ($accompanimentIds === []) {
+            $menuItem->accompanimentOptions()->detach();
+            return;
+        }
+
+        // On ne garde que les IDs d’accompagnements qui appartiennent à ce restaurant.
+        $validAccompaniments = $restaurant->menuItems()
+            ->where('category', MenuCategory::Accompagnements->value)
+            ->whereIn('id', $accompanimentIds)
+            ->pluck('id')
+            ->all();
+
+        $sync = [];
+        foreach ($validAccompaniments as $accompId) {
+            $sync[$accompId] = [
+                'extra_price' => (int) ($extraPrices[$accompId] ?? 0),
+                'is_available' => true,
+            ];
+        }
+
+        DB::transaction(function () use ($menuItem, $sync): void {
+            $menuItem->accompanimentOptions()->sync($sync);
+        });
     }
 }

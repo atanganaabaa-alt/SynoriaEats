@@ -5,7 +5,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Restaurants') }}
                 </h2>
-                <p class="text-sm text-gray-500">Commande et livraison — suite Synoria</p>
+                <p class="text-sm text-gray-500">Commande et livraison: suite Synoria</p>
             </div>
         </div>
     </x-slot>
@@ -41,7 +41,7 @@
                     <option value="rating" @selected(request('sort', 'rating') === 'rating')>Mieux notés</option>
                     <option value="fee" @selected(request('sort') === 'fee')>Frais croissants</option>
                     <option value="prep" @selected(request('sort') === 'prep')>Plus rapides</option>
-                    <option value="name" @selected(request('sort') === 'name')>Nom A–Z</option>
+                    <option value="name" @selected(request('sort') === 'name')>Nom A à Z</option>
                 </select>
                 <div class="sm:col-span-2 lg:col-span-5">
                     <x-primary-button>Filtrer</x-primary-button>
@@ -50,18 +50,18 @@
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($restaurants as $restaurant)
-                    <a href="{{ route('restaurants.show', $restaurant) }}" class="block bg-white shadow-sm sm:rounded-lg p-5 hover:ring-2 hover:ring-emerald-500/40 transition">
+                    <a href="{{ route('restaurants.show', $restaurant) }}" class="block synoria-panel sm:rounded-lg p-5 hover:ring-2 hover:ring-synoria-yellow/70 transition">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">{{ $restaurant->name }}</h3>
-                                <p class="text-sm text-emerald-700">{{ $restaurant->category }}</p>
+                                <h3 class="text-lg font-semibold text-synoria-ink">{{ $restaurant->name }}</h3>
+                                <p class="text-sm text-synoria-green">{{ $restaurant->category }}</p>
                             </div>
-                            <span class="text-sm font-medium text-gray-700">★ {{ number_format($restaurant->rating, 1) }}</span>
+                            <span class="text-sm font-medium text-synoria-ink">★ {{ number_format($restaurant->rating, 1) }}</span>
                         </div>
-                        <p class="mt-2 text-sm text-gray-500 line-clamp-2">{{ $restaurant->description }}</p>
-                        <p class="mt-3 text-xs text-gray-400">
-                            {{ $restaurant->prep_time_min }}–{{ $restaurant->prep_time_max }} min ·
-                            Livraison {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA
+                        <p class="mt-2 text-sm text-synoria-ink-soft line-clamp-2">{{ $restaurant->description }}</p>
+                        <p class="mt-3 text-xs text-synoria-ink-faint">
+                            {{ $restaurant->prep_time_min }} à {{ $restaurant->prep_time_max }} min,
+                            livraison {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA
                         </p>
                     </a>
                 @empty

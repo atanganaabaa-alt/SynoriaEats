@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -23,10 +24,21 @@ class GoogleAuthController extends Controller
                 ]);
         }
 
-        $request->session()->put(
-            'google_oauth_role',
-            $request->string('role')->toString() ?: UserRole::Customer->value
-        );
+        $role = $request->string('role')->toString() ?: UserRole::Customer->value;
+
+        if ($role === UserRole::Courier->value) {
+            return redirect()
+                ->route('login')
+                ->withErrors([
+                    'email' => 'Les livreurs ne s’inscrivent plus librement. Connexion Google possible seulement si l’admin t’a déjà créé un compte partenaire.',
+                ]);
+        }
+
+        if ($role === UserRole::Admin->value) {
+            $role = UserRole::Customer->value;
+        }
+
+        $request->session()->put('google_oauth_role', $role);
 
         return Socialite::driver('google')
             ->scopes(['openid', 'profile', 'email'])
@@ -66,6 +78,12 @@ class GoogleAuthController extends Controller
             ?? User::query()->where('email', $googleUser->getEmail())->first();
 
         if ($user) {
+            if ($user->isCourier() && ! $user->isApproved()) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Ton compte livreur partenaire n’est pas encore validé.',
+                ]);
+            }
+
             $user->forceFill([
                 'google_id' => $googleUser->getId(),
                 'avatar_url' => $googleUser->getAvatar(),
@@ -73,6 +91,12 @@ class GoogleAuthController extends Controller
                 'name' => $user->name ?: ($googleUser->getName() ?? $user->email),
             ])->save();
         } else {
+            if ($role === UserRole::Courier) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Aucun compte livreur partenaire pour cet email. Contacte l’admin SynoriaEats.',
+                ]);
+            }
+
             $user = User::query()->create([
                 'name' => $googleUser->getName() ?: $googleUser->getEmail(),
                 'email' => $googleUser->getEmail(),
@@ -82,6 +106,10 @@ class GoogleAuthController extends Controller
                 'password' => null,
                 'email_verified_at' => now(),
                 'is_active' => true,
+                'approval_status' => $role === UserRole::RestaurantOwner
+                    ? ApprovalStatus::Pending
+                    : ApprovalStatus::Approved,
+                'approved_at' => $role === UserRole::RestaurantOwner ? null : now(),
             ]);
         }
 
@@ -92,6 +120,10 @@ class GoogleAuthController extends Controller
         }
 
         Auth::login($user, true);
+
+        if ($user->isRestaurantOwner() && $user->ownedRestaurants()->doesntExist()) {
+            return redirect()->route('owner.onboarding');
+        }
 
         return redirect()->intended(route('dashboard'));
     }

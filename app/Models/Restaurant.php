@@ -28,6 +28,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'longitude',
     'is_open',
     'is_validated',
+    'status',
+    'rejection_reason',
+    'reviewed_at',
 ])]
 class Restaurant extends Model
 {
@@ -45,6 +48,8 @@ class Restaurant extends Model
             'longitude' => 'decimal:7',
             'is_open' => 'boolean',
             'is_validated' => 'boolean',
+            'status' => \App\Enums\ApprovalStatus::class,
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -66,5 +71,15 @@ class Restaurant extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(RestaurantDocument::class);
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === \App\Enums\ApprovalStatus::Approved && $this->is_validated;
     }
 }

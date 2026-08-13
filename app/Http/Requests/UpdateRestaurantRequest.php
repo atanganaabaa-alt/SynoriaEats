@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserRole;
 use App\Models\Restaurant;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -13,9 +12,7 @@ class UpdateRestaurantRequest extends FormRequest
         /** @var Restaurant $restaurant */
         $restaurant = $this->route('restaurant');
 
-        return $this->user()?->isAdmin()
-            || ($this->user()?->role === UserRole::RestaurantOwner
-                && $restaurant->owner_id === $this->user()->id);
+        return $this->user()?->can('update', $restaurant);
     }
 
     /**

@@ -20,9 +20,9 @@
                             <li class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
                                     <p class="font-medium text-gray-900">{{ $line['menu_item']->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ number_format($line['menu_item']->price, 0, ',', ' ') }} FCFA / unité</p>
+                                    <p class="text-sm text-gray-500">{{ number_format($line['unit_price'], 0, ',', ' ') }} FCFA / unité</p>
                                 </div>
-                                <form method="POST" action="{{ route('cart.update', $line['menu_item']) }}" class="flex items-center gap-2">
+                                <form method="POST" action="{{ route('cart.update', urlencode($line['line_key'])) }}" class="flex items-center gap-2">
                                     @csrf
                                     @method('PATCH')
                                     <input type="number" name="quantity" min="0" max="20" value="{{ $line['quantity'] }}"

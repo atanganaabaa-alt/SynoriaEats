@@ -1,11 +1,9 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="synoria-nav">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('home') }}" class="text-lg font-semibold tracking-tight text-emerald-700">
-                        Synoria<span class="text-gray-900">Eats</span>
-                    </a>
+                    <x-brand size="sm" />
                 </div>
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
@@ -16,7 +14,7 @@
                         <x-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
                             {{ __('Panier') }}
                             @if (($cartCount ?? 0) > 0)
-                                <span class="ms-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 rounded-full">{{ $cartCount }}</span>
+                                <span class="ms-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-synoria-yellow text-synoria-ink rounded-full">{{ $cartCount }}</span>
                             @endif
                         </x-nav-link>
                         @if (Auth::user()->isAdmin())
@@ -25,14 +23,20 @@
                             </x-nav-link>
                         @endif
                         @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
-                            <x-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*') || request()->routeIs('owner.menu-items.*')">
+                            <x-nav-link :href="Auth::user()->isAdmin() || Auth::user()->isApproved() ? route('owner.restaurants.index') : route('owner.pending')" :active="request()->routeIs('owner.*')">
                                 {{ __('Mon resto') }}
                             </x-nav-link>
-                            <x-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
-                                {{ __('Commandes reçues') }}
-                            </x-nav-link>
+                            @if (Auth::user()->isAdmin() || Auth::user()->isApproved())
+                                <x-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
+                                    {{ __('Commandes reçues') }}
+                                </x-nav-link>
+                            @endif
                         @endif
-                        @if (Auth::user()->isCourier() || Auth::user()->isAdmin())
+                        @if (Auth::user()->isCourier())
+                            <x-nav-link :href="Auth::user()->isApproved() ? route('courier.missions.index') : route('courier.pending')" :active="request()->routeIs('courier.*')">
+                                {{ __('Missions') }}
+                            </x-nav-link>
+                        @elseif (Auth::user()->isAdmin())
                             <x-nav-link :href="route('courier.missions.index')" :active="request()->routeIs('courier.*')">
                                 {{ __('Missions') }}
                             </x-nav-link>
@@ -50,7 +54,7 @@
                 @auth
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-synoria-ink-soft bg-transparent hover:text-synoria-ink focus:outline-none transition ease-in-out duration-150">
                                 <div>{{ Auth::user()->name }}</div>
                                 <div class="ms-1">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -74,15 +78,15 @@
                         </x-slot>
                     </x-dropdown>
                 @else
-                    <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-gray-900">Connexion</a>
-                    <a href="{{ route('register') }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500">
+                    <a href="{{ route('login') }}" class="text-sm text-synoria-ink-soft hover:text-synoria-ink">Connexion</a>
+                    <a href="{{ route('register') }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-synoria-green text-white text-sm font-medium hover:bg-synoria-green-dark">
                         Inscription
                     </a>
                 @endauth
             </div>
 
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none transition duration-150 ease-in-out">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-synoria-ink-faint hover:text-synoria-ink hover:bg-synoria-yellow-soft focus:outline-none transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -92,7 +96,7 @@
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white/95">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('restaurants.index')" :active="request()->routeIs('restaurants.*')">
                 {{ __('Restaurants') }}
@@ -107,14 +111,15 @@
                     </x-responsive-nav-link>
                 @endif
                 @if (Auth::user()->isRestaurantOwner() || Auth::user()->isAdmin())
-                    <x-responsive-nav-link :href="route('owner.restaurants.index')" :active="request()->routeIs('owner.restaurants.*')">
+                    <x-responsive-nav-link :href="Auth::user()->isAdmin() || Auth::user()->isApproved() ? route('owner.restaurants.index') : route('owner.pending')" :active="request()->routeIs('owner.*')">
                         {{ __('Mon resto') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('owner.orders.index')" :active="request()->routeIs('owner.orders.*')">
-                        {{ __('Commandes reçues') }}
-                    </x-responsive-nav-link>
                 @endif
-                @if (Auth::user()->isCourier() || Auth::user()->isAdmin())
+                @if (Auth::user()->isCourier())
+                    <x-responsive-nav-link :href="Auth::user()->isApproved() ? route('courier.missions.index') : route('courier.pending')" :active="request()->routeIs('courier.*')">
+                        {{ __('Missions') }}
+                    </x-responsive-nav-link>
+                @elseif (Auth::user()->isAdmin())
                     <x-responsive-nav-link :href="route('courier.missions.index')" :active="request()->routeIs('courier.*')">
                         {{ __('Missions') }}
                     </x-responsive-nav-link>
@@ -127,11 +132,11 @@
             @endauth
         </div>
 
-        <div class="pt-4 pb-1 border-t border-gray-200">
+        <div class="pt-4 pb-1 border-t border-synoria-yellow/30">
             @auth
                 <div class="px-4">
-                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                    <div class="font-medium text-base text-synoria-ink">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-synoria-ink-soft">{{ Auth::user()->email }}</div>
                 </div>
                 <div class="mt-3 space-y-1">
                     <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profil') }}</x-responsive-nav-link>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" fill="none">
+  <!-- Motif léger: hexagones Synoria + points jaune/vert -->
+  <g opacity="0.55">
+    <path d="M240 70 L330 122 V226 L240 278 L150 226 V122 Z" stroke="#303C48" stroke-width="8" fill="none"/>
+    <path d="M205 155 C205 155 222 138 240 138 C265 138 276 158 258 174 C242 188 225 194 225 218" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M275 255 C275 255 258 272 240 272 C215 272 204 252 222 236 C238 222 255 216 255 192" stroke="#63A03A" stroke-width="16" stroke-linecap="round" fill="none"/>
+  </g>
+  <circle cx="88" cy="380" r="14" fill="#FCD530"/>
+  <circle cx="392" cy="96" r="10" fill="#63A03A"/>
+  <circle cx="420" cy="360" r="7" fill="#FCD530"/>
+  <circle cx="60" cy="120" r="6" fill="#63A03A"/>
+</svg>

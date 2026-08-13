@@ -23,6 +23,10 @@ use Laravel\Sanctum\HasApiTokens;
     'rating',
     'delivery_count',
     'is_active',
+    'approval_status',
+    'partner_name',
+    'approval_notes',
+    'approved_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -41,6 +45,8 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'rating' => 'decimal:1',
             'is_active' => 'boolean',
+            'approval_status' => \App\Enums\ApprovalStatus::class,
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -82,5 +88,19 @@ class User extends Authenticatable
     public function isCustomer(): bool
     {
         return $this->role === UserRole::Customer;
+    }
+
+    public function isApproved(): bool
+    {
+        if ($this->isAdmin() || $this->isCustomer()) {
+            return true;
+        }
+
+        return $this->approval_status === \App\Enums\ApprovalStatus::Approved;
+    }
+
+    public function needsApproval(): bool
+    {
+        return $this->isRestaurantOwner() || $this->isCourier();
     }
 }

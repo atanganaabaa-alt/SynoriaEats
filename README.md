@@ -39,10 +39,11 @@ Dev tout-en-un : `composer run dev`
 
 ## Auth (pas de comptes démo)
 
-- **Inscription** : nom, email, téléphone, rôle (Client / Restaurateur / Livreur), mot de passe
-- **Connexion** : email + ton mot de passe
-- **Continuer avec Google** (OAuth) — configure la console Google Cloud :
-  - URI de redirection : `{APP_URL}/auth/google/callback`
+- **Inscription** : Client ou Restaurateur (email/mdp ou Google). **Pas d’inscription livreur libre.**
+- **Restaurateur** : RCCM + pièce d’identité à l’inscription. Compte `en attente` jusqu’à validation admin.
+- **Livreur** : créé par l’admin (partenariat) puis approuvé. Ensuite connexion email/mdp ou Google (même email).
+- **Connexion** : email + mot de passe, ou **Continuer avec Google**
+- URI Google : `{APP_URL}/auth/google/callback`
 
 Aucun mot de passe partagé en base. Chacun crée son compte.
 
@@ -88,9 +89,13 @@ Pour WhatsApp sandbox Twilio, le client doit d’abord envoyer « join … » au
 
 ### Restaurateur — ajouter des plats
 
-1. S’inscrire avec le rôle **Restaurateur** (pas Client)
-2. Menu **Mon resto** → **Créer mon restaurant**
-3. Sur la fiche restaurant : formulaire **Ajouter un plat au menu**
+1. S’inscrire **Restaurateur** + déposer RCCM et pièce d’identité
+2. Attendre l’approbation admin (`/admin/restaurants`)
+3. Menu **Mon resto** → ajouter les plats
+
+## Sprint 5 — livré
+
+Auth renforcée : Google prioritaire, preuves restaurateur, plus d’inscription livreur libre, middleware `approved`.
 
 ## Sprint 3 — livré
 

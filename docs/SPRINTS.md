@@ -1,4 +1,4 @@
-# SynoriaEats — plan en 4 sprints
+# SynoriaEats — plan en 9 sprints
 
 App livraison de repas (**Laravel** fullstack + API Sanctum), suite Synoria.  
 Références produit : Uber Eats / EasyFood / QuickLunch.
@@ -75,3 +75,33 @@ Chaîne complète commande → livraison + notes.
 
 ### Résultat visible
 Plateforme prête prod, admin opérationnel.
+
+---
+
+## Sprint 5 — Authentification renforcée ✅
+**Août 2026**
+
+- Google OAuth (client / restaurateur). Admin et livreur : connexion Google seulement si le compte existe déjà.
+- Email / mot de passe en secours.
+- Restaurateur : preuves (RCCM, CNI, justificatif) uploadées vers Cloudinary (URL seule en base).
+- Colonne `restaurants.status` : `pending` / `approved` / `rejected` (synchro `is_validated`).
+- Admin Blade (pas Filament : on garde un seul back-office cohérent avec Breeze déjà en prod) : dossiers, approuver / rejeter.
+- Middleware `approved` + `RestaurantPolicy` : pas de menu / publication tant que non approuvé.
+- Livreurs : plus d’inscription publique. Création admin + partenaire + validation préalable.
+
+### Résultat visible
+Connexion Google en un clic. Un resto n’apparaît qu’après validation. Les livreurs n’arrivent que via partenariat.
+
+---
+
+## Sprint 6 — Médias & menu enrichi
+Accompagnements liés au plat, catalogue boissons distinct, Cloudinary sur les photos.
+
+## Sprint 7 — Matching intelligent & carte temps réel
+Score de pertinence + Leaflet + positions Echo/Reverb pendant la livraison.
+
+## Sprint 8 — Suivi de préparation vérifiable
+Historique horodaté des statuts + notifications fiables + audit admin.
+
+## Sprint 9 — Agent IA compagnon
+Chat culinaire contextuel (menu, budget, attente).

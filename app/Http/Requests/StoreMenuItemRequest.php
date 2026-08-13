@@ -19,8 +19,7 @@ class StoreMenuItemRequest extends FormRequest
             return false;
         }
 
-        return $this->user()->isAdmin()
-            || ($this->user()->isRestaurantOwner() && $restaurant->owner_id === $this->user()->id);
+        return $this->user()->can('update', $restaurant);
     }
 
     /**

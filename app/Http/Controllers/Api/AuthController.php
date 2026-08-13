@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -23,18 +24,22 @@ class AuthController extends Controller
             'role' => ['required', Rule::in([
                 UserRole::Customer->value,
                 UserRole::RestaurantOwner->value,
-                UserRole::Courier->value,
             ])],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
+
+        $role = UserRole::from($validated['role']);
+        $pending = $role === UserRole::RestaurantOwner;
 
         $user = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
-            'role' => UserRole::from($validated['role']),
+            'role' => $role,
             'password' => $validated['password'],
             'is_active' => true,
+            'approval_status' => $pending ? ApprovalStatus::Pending : ApprovalStatus::Approved,
+            'approved_at' => $pending ? null : now(),
         ]);
 
         $token = $user->createToken('api')->plainTextToken;
@@ -103,6 +108,7 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'role' => $user->role->value,
             'avatar_url' => $user->avatar_url,
+            'approval_status' => $user->approval_status?->value,
         ];
     }
 }
