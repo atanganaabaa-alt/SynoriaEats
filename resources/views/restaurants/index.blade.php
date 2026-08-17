@@ -52,11 +52,18 @@
                 @forelse ($restaurants as $restaurant)
                     <a href="{{ route('restaurants.show', $restaurant) }}" class="block synoria-panel sm:rounded-lg p-5 hover:ring-2 hover:ring-synoria-yellow/70 transition">
                         <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <h3 class="text-lg font-semibold text-synoria-ink">{{ $restaurant->name }}</h3>
-                                <p class="text-sm text-synoria-green">{{ $restaurant->category }}</p>
+                            <div class="flex gap-3 min-w-0">
+                                @if ($restaurant->coverPublicUrl() || $restaurant->logoPublicUrl())
+                                    <img src="{{ $restaurant->coverPublicUrl() ?? $restaurant->logoPublicUrl() }}"
+                                         alt=""
+                                         class="h-14 w-14 rounded-lg object-cover shrink-0 ring-1 ring-synoria-yellow/30">
+                                @endif
+                                <div class="min-w-0">
+                                    <h3 class="text-lg font-semibold text-synoria-ink">{{ $restaurant->name }}</h3>
+                                    <p class="text-sm text-synoria-green">{{ $restaurant->category }}</p>
+                                </div>
                             </div>
-                            <span class="text-sm font-medium text-synoria-ink">★ {{ number_format($restaurant->rating, 1) }}</span>
+                            <span class="text-sm font-medium text-synoria-ink shrink-0">★ {{ number_format($restaurant->rating, 1) }}</span>
                         </div>
                         <p class="mt-2 text-sm text-synoria-ink-soft line-clamp-2">{{ $restaurant->description }}</p>
                         <p class="mt-3 text-xs text-synoria-ink-faint">

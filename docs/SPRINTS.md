@@ -94,8 +94,17 @@ Connexion Google en un clic. Un resto n’apparaît qu’après validation. Les 
 
 ---
 
-## Sprint 6 — Médias & menu enrichi
-Accompagnements liés au plat, catalogue boissons distinct, Cloudinary sur les photos.
+## Sprint 6 — Médias & menu enrichi ✅
+**Août 2026**
+
+- Upload Cloudinary (URL seule en base) : plats, boissons, logo, couverture / cadre resto.
+- Catégories menu : Plats, Boissons, Accompagnements (liés aux plats), Desserts.
+- Restaurateur : lie des accompagnements à un plat avec prix additionnel (`0` = inclus).
+- Client : choix multiple d’accompagnements sur les plats, section Boissons séparée.
+- Les accompagnements ne sont pas commandables seuls au catalogue (options du plat uniquement).
+
+### Résultat visible
+Photos hébergées Cloudinary (ou local en dev). Un plat « poisson 5000 FCFA » propose attiéké inclus + options payantes. Les boissons ont leur propre rubrique.
 
 ## Sprint 7 — Matching intelligent & carte temps réel
 Score de pertinence + Leaflet + positions Echo/Reverb pendant la livraison.

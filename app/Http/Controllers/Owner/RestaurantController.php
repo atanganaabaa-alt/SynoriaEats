@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRestaurantRequest;
 use App\Http\Requests\UpdateRestaurantRequest;
 use App\Models\Restaurant;
+use App\Services\CloudinaryUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class RestaurantController extends Controller
 {
+    public function __construct(private CloudinaryUploader $media) {}
+
     public function index(Request $request): View
     {
         $restaurants = Restaurant::query()
@@ -33,11 +35,11 @@ class RestaurantController extends Controller
         $data = $request->validatedRestaurant();
 
         if ($request->hasFile('logo')) {
-            $data['logo_url'] = $request->file('logo')->store('restaurants/logos', 'public');
+            $data['logo_url'] = $this->media->upload($request->file('logo'), 'restaurants/logos');
         }
 
         if ($request->hasFile('cover')) {
-            $data['cover_url'] = $request->file('cover')->store('restaurants/covers', 'public');
+            $data['cover_url'] = $this->media->upload($request->file('cover'), 'restaurants/covers');
         }
 
         $restaurant = Restaurant::query()->create($data);
@@ -71,17 +73,13 @@ class RestaurantController extends Controller
         $data['is_open'] = $request->boolean('is_open');
 
         if ($request->hasFile('logo')) {
-            if ($restaurant->logo_url) {
-                Storage::disk('public')->delete($restaurant->logo_url);
-            }
-            $data['logo_url'] = $request->file('logo')->store('restaurants/logos', 'public');
+            $this->media->deleteIfLocal($restaurant->logo_url);
+            $data['logo_url'] = $this->media->upload($request->file('logo'), 'restaurants/logos');
         }
 
         if ($request->hasFile('cover')) {
-            if ($restaurant->cover_url) {
-                Storage::disk('public')->delete($restaurant->cover_url);
-            }
-            $data['cover_url'] = $request->file('cover')->store('restaurants/covers', 'public');
+            $this->media->deleteIfLocal($restaurant->cover_url);
+            $data['cover_url'] = $this->media->upload($request->file('cover'), 'restaurants/covers');
         }
 
         $restaurant->update($data);

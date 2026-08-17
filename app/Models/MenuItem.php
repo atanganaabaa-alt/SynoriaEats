@@ -59,4 +59,9 @@ class MenuItem extends Model
             ->wherePivot('is_available', true)
             ->where('menu_items.is_available', true);
     }
+
+    public function photoPublicUrl(): ?string
+    {
+        return \App\Support\MediaUrl::resolve($this->photo_url);
+    }
 }

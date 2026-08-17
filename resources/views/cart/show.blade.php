@@ -19,7 +19,12 @@
                         @foreach ($lines as $line)
                             <li class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
-                                    <p class="font-medium text-gray-900">{{ $line['menu_item']->name }}</p>
+                                    <p class="font-medium text-gray-900">{{ $line['name'] }}</p>
+                                    @if (str_starts_with($line['line_key'], 'acc_'))
+                                        <p class="text-xs text-synoria-green">Accompagnement</p>
+                                    @elseif ($line['menu_item']->category === \App\Enums\MenuCategory::Boissons->value)
+                                        <p class="text-xs text-synoria-ink-faint">Boisson</p>
+                                    @endif
                                     <p class="text-sm text-gray-500">{{ number_format($line['unit_price'], 0, ',', ' ') }} FCFA / unité</p>
                                 </div>
                                 <form method="POST" action="{{ route('cart.update', urlencode($line['line_key'])) }}" class="flex items-center gap-2">

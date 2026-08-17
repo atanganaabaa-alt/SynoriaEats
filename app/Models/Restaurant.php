@@ -82,4 +82,14 @@ class Restaurant extends Model
     {
         return $this->status === \App\Enums\ApprovalStatus::Approved && $this->is_validated;
     }
+
+    public function logoPublicUrl(): ?string
+    {
+        return \App\Support\MediaUrl::resolve($this->logo_url);
+    }
+
+    public function coverPublicUrl(): ?string
+    {
+        return \App\Support\MediaUrl::resolve($this->cover_url);
+    }
 }

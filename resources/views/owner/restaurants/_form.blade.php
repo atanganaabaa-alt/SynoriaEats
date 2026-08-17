@@ -25,7 +25,7 @@
     </div>
     <div>
         <x-input-label for="opening_hours" value="Horaires" />
-        <x-text-input id="opening_hours" name="opening_hours" class="block mt-1 w-full" :value="old('opening_hours', $r->opening_hours ?? '10:00-22:00')" />
+        <x-text-input id="opening_hours" name="opening_hours" class="block mt-1 w-full" :value="old('opening_hours', $r->opening_hours ?? '10:00, 22:00')" placeholder="10:00, 22:00" />
     </div>
 </div>
 
@@ -46,13 +46,21 @@
 
 <div class="grid gap-4 sm:grid-cols-2">
     <div>
-        <x-input-label for="logo" value="Logo" />
+        <x-input-label for="logo" value="Logo (Cloudinary)" />
         <input id="logo" type="file" name="logo" accept="image/*" class="block mt-1 w-full text-sm" />
+        <p class="mt-1 text-xs text-gray-500">Upload direct: seule l’URL est enregistrée en base.</p>
+        @if ($r?->logoPublicUrl())
+            <img src="{{ $r->logoPublicUrl() }}" alt="" class="mt-2 h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200">
+        @endif
         <x-input-error :messages="$errors->get('logo')" class="mt-2" />
     </div>
     <div>
-        <x-input-label for="cover" value="Photo de couverture" />
+        <x-input-label for="cover" value="Photo de couverture / cadre (Cloudinary)" />
         <input id="cover" type="file" name="cover" accept="image/*" class="block mt-1 w-full text-sm" />
+        <p class="mt-1 text-xs text-gray-500">Ambiance du local, salle ou devanture.</p>
+        @if ($r?->coverPublicUrl())
+            <img src="{{ $r->coverPublicUrl() }}" alt="" class="mt-2 h-20 w-full max-w-xs rounded-lg object-cover ring-1 ring-gray-200">
+        @endif
         <x-input-error :messages="$errors->get('cover')" class="mt-2" />
     </div>
 </div>

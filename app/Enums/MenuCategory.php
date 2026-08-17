@@ -21,4 +21,22 @@ enum MenuCategory: string
     {
         return array_column(self::cases(), 'value');
     }
+
+    /** Catégories visibles sur le menu client (hors accompagnements liés aux plats). */
+    public function visibleInClientCatalog(): bool
+    {
+        return $this !== self::Accompagnements;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function clientCatalogOrder(): array
+    {
+        return [
+            self::Plats->value,
+            self::Boissons->value,
+            self::Desserts->value,
+        ];
+    }
 }

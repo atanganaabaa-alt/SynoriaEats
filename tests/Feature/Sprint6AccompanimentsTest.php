@@ -97,5 +97,83 @@ class Sprint6AccompanimentsTest extends TestCase
         $this->assertSame(0, (int) ($byName[$acc1->name] ?? -1));
         $this->assertSame(300, (int) ($byName[$acc2->name] ?? -1));
     }
+
+    public function test_accompaniments_hidden_from_public_menu_but_drinks_visible(): void
+    {
+        $restaurant = Restaurant::factory()->create(['is_validated' => true, 'is_open' => true]);
+
+        MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Poisson braisé',
+            'category' => MenuCategory::Plats->value,
+            'is_available' => true,
+        ]);
+
+        MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Attiéké',
+            'category' => MenuCategory::Accompagnements->value,
+            'is_available' => true,
+        ]);
+
+        MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Coca-Cola',
+            'category' => MenuCategory::Boissons->value,
+            'is_available' => true,
+        ]);
+
+        $this->get(route('restaurants.show', $restaurant))
+            ->assertOk()
+            ->assertSee('Poisson braisé')
+            ->assertSee('Coca-Cola')
+            ->assertSee('Boissons')
+            ->assertDontSee('Attiéké');
+    }
+
+    public function test_customer_can_order_drink_without_dish(): void
+    {
+        config(['synoria.payments.sandbox' => true]);
+
+        $customer = User::factory()->create();
+        $restaurant = Restaurant::factory()->create([
+            'latitude' => 4.05,
+            'longitude' => 11.53,
+            'delivery_fee' => 500,
+            'is_validated' => true,
+        ]);
+
+        $drink = MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Jus de bissap',
+            'price' => 800,
+            'category' => MenuCategory::Boissons->value,
+            'is_available' => true,
+        ]);
+
+        $this->actingAs($customer)
+            ->post(route('cart.store'), [
+                'menu_item_id' => $drink->id,
+                'quantity' => 2,
+            ])
+            ->assertRedirect(route('cart.show'));
+
+        $this->actingAs($customer)
+            ->post(route('checkout.store'), [
+                'delivery_address' => 'Bastos, Yaoundé',
+                'delivery_phone' => '+237 6 00 00 00 00',
+                'delivery_lat' => $restaurant->latitude,
+                'delivery_lng' => $restaurant->longitude,
+                'payment_method' => PaymentMethod::MtnMomo->value,
+                'payment_phone' => '+237 6 00 00 00 00',
+            ])
+            ->assertRedirect();
+
+        $order = Order::query()->latest()->first();
+        $this->assertNotNull($order);
+        $this->assertSame(1, $order->items()->count());
+        $this->assertSame('Jus de bissap', $order->items()->first()->name);
+        $this->assertSame(800, (int) $order->items()->first()->unit_price);
+    }
 }
 

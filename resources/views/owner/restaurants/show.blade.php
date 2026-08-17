@@ -62,7 +62,10 @@
                 <h3 class="font-semibold text-gray-900 mb-4">Ajouter au menu</h3>
                 <form method="POST" action="{{ route('owner.menu-items.store', $restaurant) }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
-                    @include('owner.menu-items._form', ['categories' => \App\Enums\MenuCategory::cases()])
+                    @include('owner.menu-items._form', [
+                        'categories' => \App\Enums\MenuCategory::cases(),
+                        'accompaniments' => $restaurant->menuItems->where('category', \App\Enums\MenuCategory::Accompagnements->value),
+                    ])
                     <div class="flex justify-end">
                         <x-primary-button>Ajouter</x-primary-button>
                     </div>
@@ -83,8 +86,7 @@
                             <li class="py-3 flex items-start justify-between gap-4">
                                 <div class="flex gap-3">
                                     @if ($item->photo_url)
-                                        <img src="{{ str_starts_with($item->photo_url, 'http') ? $item->photo_url : asset('storage/'.$item->photo_url) }}"
-                                             alt="" class="h-14 w-14 rounded object-cover shrink-0">
+                                        <img src="{{ $item->photoPublicUrl() }}" alt="" class="h-14 w-14 rounded object-cover shrink-0">
                                     @endif
                                     <div>
                                         <p class="font-medium text-gray-900">{{ $item->name }}</p>

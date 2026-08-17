@@ -51,7 +51,14 @@ class RestaurantController extends Controller
     {
         abort_unless($restaurant->is_validated || auth()->user()?->isAdmin() || auth()->user()?->id === $restaurant->owner_id, 404);
 
-        $restaurant->load(['menuItems' => fn ($query) => $query->where('is_available', true)->orderBy('category')->orderBy('name')]);
+        $restaurant->load([
+            'menuItems' => fn ($query) => $query
+                ->where('is_available', true)
+                ->where('category', '!=', \App\Enums\MenuCategory::Accompagnements->value)
+                ->orderBy('category')
+                ->orderBy('name'),
+            'menuItems.accompanimentOptions',
+        ]);
 
         return view('restaurants.show', compact('restaurant'));
     }
