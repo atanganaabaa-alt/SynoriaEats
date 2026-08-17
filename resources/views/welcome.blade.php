@@ -15,8 +15,13 @@
                 <x-brand />
                 <nav class="flex items-center gap-3 text-sm">
                     @auth
-                        <a href="{{ route('restaurants.index') }}" class="text-synoria-ink-soft hover:text-synoria-ink">Restaurants</a>
-                        <a href="{{ route('dashboard') }}" class="rounded-md bg-synoria-green px-3 py-1.5 font-medium text-white hover:bg-synoria-green-dark">Tableau de bord</a>
+                        <span class="hidden sm:inline text-synoria-ink-soft">
+                            {{ Auth::user()->name }}
+                            <span class="text-synoria-ink-faint">({{ Auth::user()->role->label() }})</span>
+                        </span>
+                        <a href="{{ route('dashboard') }}" class="rounded-md bg-synoria-green px-3 py-1.5 font-medium text-white hover:bg-synoria-green-dark">Espace {{ Auth::user()->role->label() }}</a>
+                        <x-logout-button />
+                        <x-logout-button redirect="login">Changer de compte</x-logout-button>
                     @else
                         <a href="{{ route('login') }}" class="text-synoria-ink-soft hover:text-synoria-ink">Connexion</a>
                         <a href="{{ route('register') }}" class="rounded-md bg-synoria-green px-3 py-1.5 font-medium text-white hover:bg-synoria-green-dark">Inscription</a>
@@ -43,9 +48,11 @@
                             <a href="{{ route('restaurants.index') }}" class="inline-flex items-center rounded-md bg-synoria-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-synoria-green-dark">
                                 Explorer les restaurants
                             </a>
-                            <a href="{{ route('register') }}" class="inline-flex items-center rounded-md border border-synoria-ink/10 bg-white/90 px-5 py-2.5 text-sm font-semibold text-synoria-ink hover:bg-synoria-yellow-soft">
-                                Créer un compte
-                            </a>
+                            @guest
+                                <a href="{{ route('register') }}" class="inline-flex items-center rounded-md border border-synoria-ink/10 bg-white/90 px-5 py-2.5 text-sm font-semibold text-synoria-ink hover:bg-synoria-yellow-soft">
+                                    Créer un compte
+                                </a>
+                            @endguest
                         </div>
                     </div>
 

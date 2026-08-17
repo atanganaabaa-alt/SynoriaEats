@@ -106,8 +106,16 @@ Connexion Google en un clic. Un resto n’apparaît qu’après validation. Les 
 ### Résultat visible
 Photos hébergées Cloudinary (ou local en dev). Un plat « poisson 5000 FCFA » propose attiéké inclus + options payantes. Les boissons ont leur propre rubrique.
 
-## Sprint 7 — Matching intelligent & carte temps réel
-Score de pertinence + Leaflet + positions Echo/Reverb pendant la livraison.
+## Sprint 7 — Matching intelligent & carte temps réel ✅
+**Août 2026**
+
+- Géoloc client à l’entrée du catalogue (`lat` / `lng`, mémorisés en session).
+- Score de pertinence: distance, prix moyen des plats, frais de livraison estimés, livreurs proches, note.
+- Carte Leaflet (polling 4 s, pas de WebSocket) pendant « en livraison ».
+- Client et livreur se voient; le partage GPS s’arrête à « livrée » (coordonnées effacées).
+
+### Résultat visible
+Le catalogue se trie selon ta position. Pendant la course, une carte OSM suit livreur et client, puis le suivi se coupe à la livraison.
 
 ## Sprint 8 — Suivi de préparation vérifiable
 Historique horodaté des statuts + notifications fiables + audit admin.

@@ -177,6 +177,10 @@ class OrderService
             $order->update([
                 'status' => OrderStatus::Delivered,
                 'delivered_at' => now(),
+                'courier_lat' => null,
+                'courier_lng' => null,
+                'customer_lat' => null,
+                'customer_lng' => null,
             ]);
 
             User::query()->whereKey($courier->id)->increment('delivery_count');
@@ -191,13 +195,39 @@ class OrderService
     {
         $this->assertAssignedCourier($order, $courier);
 
-        if (! in_array($order->status, [OrderStatus::Ready, OrderStatus::OutForDelivery], true)) {
-            throw new InvalidArgumentException('Position non mise à jour pour ce statut.');
+        if (! $order->isLiveTrackingActive() && $order->status !== OrderStatus::Ready) {
+            throw new InvalidArgumentException('Le suivi GPS n’est actif qu’entre la prise en charge et la livraison.');
+        }
+
+        if ($order->status === OrderStatus::Delivered || $order->status === OrderStatus::Cancelled) {
+            throw new InvalidArgumentException('Le suivi GPS est coupé: commande terminée.');
         }
 
         $order->update([
             'courier_lat' => $lat,
             'courier_lng' => $lng,
+        ]);
+
+        $courier->forceFill([
+            'last_lat' => $lat,
+            'last_lng' => $lng,
+            'last_seen_at' => now(),
+        ])->save();
+
+        return $order->fresh();
+    }
+
+    public function updateCustomerLocation(Order $order, User $customer, float $lat, float $lng): Order
+    {
+        abort_unless($order->customer_id === $customer->id || $customer->isAdmin(), 403);
+
+        if (! $order->isLiveTrackingActive()) {
+            throw new InvalidArgumentException('Le suivi GPS n’est actif que pendant la livraison.');
+        }
+
+        $order->update([
+            'customer_lat' => $lat,
+            'customer_lng' => $lng,
         ]);
 
         return $order->fresh();

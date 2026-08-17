@@ -54,4 +54,10 @@ return [
         ],
     ],
 
+    'matching' => [
+        'courier_radius_km' => (float) env('SYNORIA_MATCH_COURIER_RADIUS_KM', 8),
+        'courier_fresh_minutes' => (int) env('SYNORIA_MATCH_COURIER_FRESH_MIN', 45),
+        'max_distance_km' => (float) env('SYNORIA_MATCH_MAX_DISTANCE_KM', 12),
+    ],
+
 ];

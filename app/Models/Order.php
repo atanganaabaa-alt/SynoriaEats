@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'status',
     'courier_lat',
     'courier_lng',
+    'customer_lat',
+    'customer_lng',
     'notes',
     'delivered_at',
 ])]
@@ -53,6 +55,8 @@ class Order extends Model
             'delivery_lng' => 'decimal:7',
             'courier_lat' => 'decimal:7',
             'courier_lng' => 'decimal:7',
+            'customer_lat' => 'decimal:7',
+            'customer_lng' => 'decimal:7',
             'delivered_at' => 'datetime',
         ];
     }
@@ -80,5 +84,10 @@ class Order extends Model
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
+    }
+
+    public function isLiveTrackingActive(): bool
+    {
+        return $this->status === OrderStatus::OutForDelivery;
     }
 }

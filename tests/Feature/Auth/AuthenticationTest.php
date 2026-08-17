@@ -51,4 +51,14 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_users_can_switch_account_to_login_screen(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/logout', ['redirect' => 'login']);
+
+        $this->assertGuest();
+        $response->assertRedirect(route('login', absolute: false));
+    }
 }

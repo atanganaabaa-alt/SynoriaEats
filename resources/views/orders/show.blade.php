@@ -14,9 +14,7 @@
                 </div>
             @endif
 
-            <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-2" id="order-status-card"
-                 data-tracking-url="{{ route('orders.tracking', $order) }}"
-                 data-poll="{{ in_array($order->status, [\App\Enums\OrderStatus::Ready, \App\Enums\OrderStatus::OutForDelivery], true) ? '1' : '0' }}">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-2" id="order-status-card">
                 <p><span class="text-gray-500">Restaurant :</span> {{ $order->restaurant->name }}</p>
                 <p><span class="text-gray-500">Statut :</span> <strong id="status-label">{{ $order->status->label() }}</strong></p>
                 <p><span class="text-gray-500">Paiement :</span> {{ $order->payment_method->label() }} · {{ $order->payment_status->label() }}</p>
@@ -28,10 +26,9 @@
                         · ★ {{ number_format($order->courier->rating ?? 0, 1) }}
                     </p>
                 @endif
-                <p id="courier-position" class="text-sm text-emerald-700 @if(! $order->courier_lat) hidden @endif">
-                    Position livreur : <span id="courier-coords">{{ $order->courier_lat }}, {{ $order->courier_lng }}</span>
-                </p>
             </div>
+
+            <x-live-map :order="$order" role="customer" />
 
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="font-semibold text-gray-900 mb-3">Articles</h3>
@@ -69,12 +66,12 @@
                         <form method="POST" action="{{ route('orders.reviews.store', $order) }}" class="space-y-4">
                             @csrf
                             <div>
-                                <x-input-label for="restaurant_rating" value="Note restaurant (1–5)" />
+                                <x-input-label for="restaurant_rating" value="Note restaurant (1 à 5)" />
                                 <x-text-input id="restaurant_rating" type="number" name="restaurant_rating" min="1" max="5" class="block mt-1 w-full" :value="old('restaurant_rating', 5)" required />
                             </div>
                             @if ($order->courier_id)
                                 <div>
-                                    <x-input-label for="courier_rating" value="Note livreur (1–5)" />
+                                    <x-input-label for="courier_rating" value="Note livreur (1 à 5)" />
                                     <x-text-input id="courier_rating" type="number" name="courier_rating" min="1" max="5" class="block mt-1 w-full" :value="old('courier_rating', 5)" />
                                 </div>
                             @endif
@@ -89,29 +86,4 @@
             @endif
         </div>
     </div>
-
-    <script>
-        const card = document.getElementById('order-status-card');
-        if (card?.dataset.poll === '1') {
-            const poll = async () => {
-                try {
-                    const res = await fetch(card.dataset.trackingUrl, { headers: { 'Accept': 'application/json' } });
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    document.getElementById('status-label').textContent = data.status_label;
-                    if (data.courier_lat && data.courier_lng) {
-                        const box = document.getElementById('courier-position');
-                        box.classList.remove('hidden');
-                        document.getElementById('courier-coords').textContent = `${data.courier_lat}, ${data.courier_lng}`;
-                    }
-                    if (['delivered', 'cancelled'].includes(data.status)) {
-                        clearInterval(timer);
-                        window.location.reload();
-                    }
-                } catch (e) {}
-            };
-            const timer = setInterval(poll, 5000);
-            poll();
-        }
-    </script>
 </x-app-layout>

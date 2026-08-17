@@ -25,6 +25,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/restaurants', [RestaurantController::class, 'index'])->name('restaurants.index');
+Route::get('/selection', [RestaurantController::class, 'preferences'])->name('restaurants.preferences');
+Route::post('/selection', [RestaurantController::class, 'savePreferences'])->name('restaurants.preferences.store');
+Route::delete('/selection', [RestaurantController::class, 'resetPreferences'])->name('restaurants.preferences.reset');
 Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show'])->name('restaurants.show');
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
@@ -69,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::get('/orders/{order}/tracking', [OrderController::class, 'tracking'])->name('orders.tracking');
+    Route::post('/orders/{order}/location', [OrderController::class, 'location'])->name('orders.location');
     Route::post('/orders/{order}/reviews', [ReviewController::class, 'store'])->name('orders.reviews.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

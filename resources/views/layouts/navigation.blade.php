@@ -52,15 +52,28 @@
 
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-3">
                 @auth
+                    <div class="flex items-center gap-3 rounded-full border border-synoria-yellow/35 bg-white/80 px-3 py-2 shadow-sm">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-synoria-yellow/25 text-sm font-semibold text-synoria-ink">
+                            {{ \Illuminate\Support\Str::of(Auth::user()->name)->trim()->substr(0, 1)->upper() }}
+                        </div>
+                        <div class="text-left leading-tight">
+                            <p class="text-sm font-semibold text-synoria-ink">{{ Auth::user()->name }}</p>
+                            <p class="text-xs text-synoria-ink-faint">{{ Auth::user()->role->label() }}</p>
+                        </div>
+                    </div>
+                    <x-logout-button class="inline-flex items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-synoria-ink-soft hover:border-slate-300 hover:text-synoria-ink no-underline">
+                        Deconnexion
+                    </x-logout-button>
+                    <x-logout-button redirect="login" class="inline-flex items-center rounded-full bg-synoria-yellow px-4 py-2 text-sm font-medium text-synoria-ink hover:bg-synoria-yellow-deep no-underline shadow-sm">
+                        Changer de compte
+                    </x-logout-button>
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-synoria-ink-soft bg-transparent hover:text-synoria-ink focus:outline-none transition ease-in-out duration-150">
-                                <div>{{ Auth::user()->name }}</div>
-                                <div class="ms-1">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
+                            <button type="button" class="inline-flex items-center px-4 py-2 border border-synoria-yellow/40 text-sm leading-4 font-medium rounded-full text-synoria-ink bg-white hover:bg-synoria-yellow-soft focus:outline-none transition ease-in-out duration-150 shadow-sm">
+                                Compte
+                                <svg class="fill-current h-4 w-4 ms-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
                             </button>
                         </x-slot>
 
@@ -68,13 +81,9 @@
                             <x-dropdown-link :href="route('profile.edit')">
                                 {{ __('Profil') }}
                             </x-dropdown-link>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <x-dropdown-link :href="route('logout')"
-                                        onclick="event.preventDefault(); this.closest('form').submit();">
-                                    {{ __('Déconnexion') }}
-                                </x-dropdown-link>
-                            </form>
+                            <div class="px-4 py-2">
+                                <x-logout-button class="text-sm font-medium text-red-600 hover:text-red-700" />
+                            </div>
                         </x-slot>
                     </x-dropdown>
                 @else
@@ -136,17 +145,16 @@
             @auth
                 <div class="px-4">
                     <div class="font-medium text-base text-synoria-ink">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-sm text-synoria-ink-soft">{{ Auth::user()->email }}</div>
+                    <div class="font-medium text-sm text-synoria-ink-soft">{{ Auth::user()->role->label() }} · {{ Auth::user()->email }}</div>
                 </div>
-                <div class="mt-3 space-y-1">
+                <div class="mt-3 space-y-1 px-4 pb-3">
                     <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profil') }}</x-responsive-nav-link>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-responsive-nav-link :href="route('logout')"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
-                            {{ __('Déconnexion') }}
-                        </x-responsive-nav-link>
-                    </form>
+                    <div class="pt-2">
+                        <x-logout-button />
+                    </div>
+                    <div class="pt-1">
+                        <x-logout-button redirect="login">Changer de compte</x-logout-button>
+                    </div>
                 </div>
             @else
                 <div class="mt-3 space-y-1 px-4 pb-3">

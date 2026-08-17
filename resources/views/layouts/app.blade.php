@@ -12,6 +12,7 @@
         <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @stack('styles')
     </head>
     <body class="font-sans antialiased">
         <div class="synoria-shell" @auth x-data="liveToasts()" x-init="start()" @endauth>
@@ -75,5 +76,6 @@
                 }
             </script>
         @endauth
+        @stack('scripts')
     </body>
 </html>

@@ -27,6 +27,9 @@ use Laravel\Sanctum\HasApiTokens;
     'partner_name',
     'approval_notes',
     'approved_at',
+    'last_lat',
+    'last_lng',
+    'last_seen_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -47,6 +50,9 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'approval_status' => \App\Enums\ApprovalStatus::class,
             'approved_at' => 'datetime',
+            'last_lat' => 'decimal:7',
+            'last_lng' => 'decimal:7',
+            'last_seen_at' => 'datetime',
         ];
     }
 

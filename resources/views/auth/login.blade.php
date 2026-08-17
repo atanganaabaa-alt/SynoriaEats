@@ -26,6 +26,10 @@
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    <p class="mb-4 text-xs text-gray-500">
+        Pour tester plusieurs rôles: un navigateur par compte (ex. Chrome = client, Firefox = livreur). Clique <strong>Changer de compte</strong> avant de te reconnecter dans le même navigateur.
+    </p>
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
