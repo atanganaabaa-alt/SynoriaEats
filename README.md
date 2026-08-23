@@ -4,6 +4,8 @@ Livraison de repas — sœur de **Synoria**, suite type Google. Style Uber Eats 
 
 **Laravel 13** · Blade + Tailwind · API Sanctum · auth email/mdp **ou Google** · PostgreSQL (cible prod)
 
+**Sprints 1 → 9 livrés** (auth, commande, livraison, admin, matching, carte live, audit, compagnon).
+
 Plan détaillé : [docs/SPRINTS.md](docs/SPRINTS.md)  
 **Lancer en local (commandes) :** [docs/LOCAL.md](docs/LOCAL.md)
 
