@@ -4,7 +4,8 @@ Livraison de repas — sœur de **Synoria**, suite type Google. Style Uber Eats 
 
 **Laravel 13** · Blade + Tailwind · API Sanctum · auth email/mdp **ou Google** · PostgreSQL (cible prod)
 
-Plan détaillé : [docs/SPRINTS.md](docs/SPRINTS.md)
+Plan détaillé : [docs/SPRINTS.md](docs/SPRINTS.md)  
+**Lancer en local (commandes) :** [docs/LOCAL.md](docs/LOCAL.md)
 
 ## Prérequis
 
@@ -117,9 +118,17 @@ SYNORIA_DELIVERY_MIN_FEE=0
 Back-office admin : dashboard CA/livraisons/notes, suspendre comptes, valider restos, rapport commissions, filtres catalogue.
 
 ```bash
-php artisan synoria:admin admin@example.com 'MotDePasseFort!'
-# puis /admin
+php artisan synoria:admin admin@synoria.test 'Admin123!'
+# puis /admin — détails : docs/LOCAL.md
 ```
 
-Déploiement VPS : [docs/DEPLOY_VPS.md](docs/DEPLOY_VPS.md)  
-Déploiement **o2switch** (1ʳᵉ version) : [docs/DEPLOY_O2SWITCH.md](docs/DEPLOY_O2SWITCH.md)
+## Sprint 9 — livré
+
+Compagnon culinaire (`/companion` + widget) : budget, menu, temps d’attente. Moteur local sans clé ; OpenAI optionnel via `OPENAI_API_KEY`.
+
+## Docs
+
+- Lancer en local : [docs/LOCAL.md](docs/LOCAL.md)
+- Plan sprints : [docs/SPRINTS.md](docs/SPRINTS.md)
+- Déploiement VPS : [docs/DEPLOY_VPS.md](docs/DEPLOY_VPS.md)  
+- Déploiement **o2switch** : [docs/DEPLOY_O2SWITCH.md](docs/DEPLOY_O2SWITCH.md)

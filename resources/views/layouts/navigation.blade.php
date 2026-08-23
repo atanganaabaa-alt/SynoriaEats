@@ -10,6 +10,9 @@
                     <x-nav-link :href="route('restaurants.index')" :active="request()->routeIs('restaurants.*')">
                         {{ __('Restaurants') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('companion.show')" :active="request()->routeIs('companion.*')">
+                        {{ __('Compagnon') }}
+                    </x-nav-link>
                     @auth
                         <x-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
                             {{ __('Panier') }}
@@ -109,6 +112,9 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('restaurants.index')" :active="request()->routeIs('restaurants.*')">
                 {{ __('Restaurants') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('companion.show')" :active="request()->routeIs('companion.*')">
+                {{ __('Compagnon') }}
             </x-responsive-nav-link>
             @auth
                 <x-responsive-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">

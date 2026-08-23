@@ -121,4 +121,6 @@
             @endforelse
         </div>
     </div>
+
+    <x-companion-chat :restaurant="$restaurant" />
 </x-app-layout>

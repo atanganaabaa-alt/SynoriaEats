@@ -144,6 +144,8 @@
         </div>
     </div>
 
+    <x-companion-chat />
+
     @if (! $hasLocation)
         <script>
             (function () {

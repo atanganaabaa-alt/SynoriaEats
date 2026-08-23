@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CompanionController;
 use App\Http\Controllers\Courier\MissionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
@@ -30,6 +31,10 @@ Route::get('/selection', [RestaurantController::class, 'preferences'])->name('re
 Route::post('/selection', [RestaurantController::class, 'savePreferences'])->name('restaurants.preferences.store');
 Route::delete('/selection', [RestaurantController::class, 'resetPreferences'])->name('restaurants.preferences.reset');
 Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show'])->name('restaurants.show');
+
+Route::get('/companion', [CompanionController::class, 'show'])->name('companion.show');
+Route::post('/companion/message', [CompanionController::class, 'message'])->name('companion.message');
+Route::post('/companion/reset', [CompanionController::class, 'reset'])->name('companion.reset');
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');

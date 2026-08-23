@@ -88,4 +88,6 @@
             @endif
         </div>
     </div>
+
+    <x-companion-chat :restaurant="$order->restaurant" />
 </x-app-layout>

@@ -117,7 +117,7 @@ Photos hébergées Cloudinary (ou local en dev). Un plat « poisson 5000 FCFA »
 ### Résultat visible
 Le catalogue se trie selon ta position. Pendant la course, une carte OSM suit livreur et client, puis le suivi se coupe à la livraison.
 
-## Sprint 8 — Suivi de préparation vérifiable
+## Sprint 8 — Suivi de préparation vérifiable ✅
 **Août 2026**
 
 - Historique horodaté de chaque changement de statut (acteur, note, date/heure).
@@ -128,5 +128,31 @@ Le catalogue se trie selon ta position. Pendant la course, une carte OSM suit li
 ### Résultat visible
 On voit qui a passé la commande à « en préparation » et à quelle heure. Si un SMS échoue, l’admin le voit, la commande continue.
 
-## Sprint 9 — Agent IA compagnon
-Chat culinaire contextuel (menu, budget, attente).
+## Sprint 9 — Agent IA compagnon ✅
+**Août 2026**
+
+- Compagnon culinaire contextuel (widget chat + page `/companion`).
+- Contexte : menu du restaurant, panier, commande active (statut / temps d’attente).
+- Moteur local par défaut (budget, recommandations, délais) — fonctionne sans clé API.
+- Mode OpenAI optionnel via `OPENAI_API_KEY` (fallback automatique si l’API échoue).
+
+### Résultat visible
+Sur un resto, tu demandes « j’ai 5000 FCFA » et le compagnon propose des plats du menu réel. Avec une commande en cours, il explique l’attente.
+
+---
+
+## Statut global
+
+| Sprint | Thème | Statut |
+|--------|--------|--------|
+| 1 | Auth + restos + menus | ✅ |
+| 2 | Commander / payer | ✅ |
+| 3 | Livraison + notes | ✅ |
+| 4 | Back-office admin | ✅ |
+| 5 | Auth renforcée / validation | ✅ |
+| 6 | Médias & menu enrichi | ✅ |
+| 7 | Matching + carte live | ✅ |
+| 8 | Timeline & audit notifs | ✅ |
+| 9 | Compagnon culinaire | ✅ |
+
+Doc lancement local : [LOCAL.md](LOCAL.md)
