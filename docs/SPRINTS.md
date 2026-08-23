@@ -118,7 +118,15 @@ Photos hébergées Cloudinary (ou local en dev). Un plat « poisson 5000 FCFA »
 Le catalogue se trie selon ta position. Pendant la course, une carte OSM suit livreur et client, puis le suivi se coupe à la livraison.
 
 ## Sprint 8 — Suivi de préparation vérifiable
-Historique horodaté des statuts + notifications fiables + audit admin.
+**Août 2026**
+
+- Historique horodaté de chaque changement de statut (acteur, note, date/heure).
+- Notifications SMS / in-app enregistrées (succès ou échec) sans bloquer le flux commande.
+- Timeline visible client, restaurateur et livreur, mise à jour par polling.
+- Audit admin : liste des commandes, détail du parcours et journal des notifications.
+
+### Résultat visible
+On voit qui a passé la commande à « en préparation » et à quelle heure. Si un SMS échoue, l’admin le voit, la commande continue.
 
 ## Sprint 9 — Agent IA compagnon
 Chat culinaire contextuel (menu, budget, attente).

@@ -45,7 +45,7 @@ class MissionController extends Controller
     {
         $this->assertCanView($request, $order);
 
-        $order->load(['restaurant', 'items', 'customer']);
+        $order->load(['restaurant', 'items', 'customer', 'statusEvents.actor']);
 
         return view('courier.missions.show', compact('order'));
     }

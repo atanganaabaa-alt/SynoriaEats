@@ -31,7 +31,7 @@ class OrderController extends Controller
             403
         );
 
-        $order->load(['customer', 'restaurant', 'items']);
+        $order->load(['customer', 'restaurant', 'items', 'statusEvents.actor']);
 
         $nextStatuses = match ($order->status) {
             OrderStatus::Pending => [OrderStatus::Accepted, OrderStatus::Cancelled],

@@ -9,7 +9,7 @@ use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\Notifications\Notifier;
+use App\Services\Notifications\NotificationAudit;
 use App\Services\Payments\PaymentManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,7 +20,7 @@ class OrderService
     public function __construct(
         private PaymentManager $payments,
         private DeliveryFeeCalculator $deliveryFees,
-        private Notifier $notifier,
+        private NotificationAudit $audit,
     ) {}
 
     /**
@@ -101,7 +101,10 @@ class OrderService
             throw new InvalidArgumentException($result->message ?? 'Paiement refusé.');
         }
 
-        return $order->fresh(['items', 'restaurant']);
+        $order = $order->fresh(['items', 'restaurant']);
+        $this->recordStatusChange($order, null, OrderStatus::Pending, $customer, 'Commande passée et payée');
+
+        return $order;
     }
 
     public function updateStatus(Order $order, OrderStatus $status, User $actor): Order
@@ -111,8 +114,9 @@ class OrderService
 
         $previous = $order->status;
         $order->update(['status' => $status]);
+        $this->recordStatusChange($order, $previous, $status, $actor);
 
-        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous, $actor);
 
         return $order->fresh();
     }
@@ -133,13 +137,23 @@ class OrderService
             return $locked->fresh(['restaurant', 'customer', 'courier']);
         });
 
-        $this->notifier->send(
+        $this->recordStatusChange(
+            $claimed,
+            $claimed->status,
+            $claimed->status,
+            $courier,
+            'Livreur assigné : '.$courier->name
+        );
+
+        $this->audit->sms(
+            $claimed,
             $claimed->delivery_phone,
             sprintf('SynoriaEats : un livreur a pris ta commande %s.', $claimed->number)
         );
 
         if ($courier->phone) {
-            $this->notifier->send(
+            $this->audit->sms(
+                $claimed,
                 $courier->phone,
                 sprintf(
                     'SynoriaEats : mission %s acceptée — %s, %s.',
@@ -149,6 +163,13 @@ class OrderService
                 )
             );
         }
+
+        $this->audit->inApp(
+            $claimed,
+            $claimed->customer,
+            'Livreur en route vers le resto',
+            "{$claimed->number} · {$courier->name} a pris ta commande"
+        );
 
         return $claimed;
     }
@@ -160,8 +181,9 @@ class OrderService
 
         $previous = $order->status;
         $order->update(['status' => OrderStatus::OutForDelivery]);
+        $this->recordStatusChange($order, $previous, OrderStatus::OutForDelivery, $courier, 'Livraison démarrée');
 
-        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous, $courier);
 
         return $order->fresh();
     }
@@ -186,7 +208,9 @@ class OrderService
             User::query()->whereKey($courier->id)->increment('delivery_count');
         });
 
-        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous);
+        $this->recordStatusChange($order, $previous, OrderStatus::Delivered, $courier, 'Commande livrée');
+
+        OrderStatusChanged::dispatch($order->fresh(['courier', 'restaurant.owner']), $previous, $courier);
 
         return $order->fresh();
     }
@@ -231,6 +255,16 @@ class OrderService
         ]);
 
         return $order->fresh();
+    }
+
+    private function recordStatusChange(Order $order, ?OrderStatus $from, OrderStatus $to, ?User $actor, ?string $note = null): void
+    {
+        $order->statusEvents()->create([
+            'from_status' => $from?->value,
+            'to_status' => $to->value,
+            'actor_id' => $actor?->id,
+            'note' => $note,
+        ]);
     }
 
     private function generateNumber(): string

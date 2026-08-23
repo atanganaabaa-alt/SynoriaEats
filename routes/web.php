@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CommissionController as AdminCommissionController;
 use App\Http\Controllers\Admin\CourierController as AdminCourierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\RestaurantController as AdminRestaurantController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\GoogleAuthController;
@@ -95,6 +96,8 @@ Route::middleware('auth')->group(function () {
         Route::post('couriers', [AdminCourierController::class, 'store'])->name('couriers.store');
         Route::patch('couriers/{user}', [AdminCourierController::class, 'update'])->name('couriers.update');
         Route::get('commissions', [AdminCommissionController::class, 'index'])->name('commissions.index');
+        Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     });
 
     Route::middleware('role:courier')->prefix('courier')->name('courier.')->group(function () {

@@ -30,6 +30,8 @@
 
             <x-live-map :order="$order" role="customer" />
 
+            <x-order-timeline :order="$order" :poll="true" />
+
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="font-semibold text-gray-900 mb-3">Articles</h3>
                 <ul class="divide-y divide-gray-100">

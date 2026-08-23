@@ -25,7 +25,7 @@ class OrderController extends Controller
     {
         abort_unless($order->customer_id === $request->user()->id || $request->user()->isAdmin(), 403);
 
-        $order->load(['restaurant', 'items', 'courier', 'review']);
+        $order->load(['restaurant', 'items', 'courier', 'review', 'statusEvents.actor']);
 
         return view('orders.show', compact('order'));
     }
@@ -35,6 +35,7 @@ class OrderController extends Controller
         $this->assertCanTrack($request, $order);
 
         $live = $order->isLiveTrackingActive();
+        $order->loadMissing(['courier', 'restaurant', 'statusEvents.actor']);
 
         return response()->json([
             'number' => $order->number,
@@ -57,6 +58,14 @@ class OrderController extends Controller
                 'lat' => $order->restaurant->latitude,
                 'lng' => $order->restaurant->longitude,
             ],
+            'timeline' => $order->statusEvents->map(fn ($event) => [
+                'to_status' => $event->to_status->value,
+                'to_status_label' => $event->to_status->label(),
+                'note' => $event->note,
+                'actor' => $event->actor?->name,
+                'at' => $event->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+                'current' => $event->to_status === $order->status,
+            ]),
             'updated_at' => $order->updated_at?->toIso8601String(),
         ]);
     }
@@ -89,6 +98,7 @@ class OrderController extends Controller
         abort_unless(
             $order->customer_id === $user->id
             || $order->courier_id === $user->id
+            || $order->restaurant->owner_id === $user->id
             || $user->isAdmin(),
             403
         );

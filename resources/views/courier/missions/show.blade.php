@@ -24,6 +24,8 @@
                 <x-live-map :order="$order" role="courier" />
             @endif
 
+            <x-order-timeline :order="$order" :poll="true" />
+
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="font-semibold mb-3">Articles</h3>
                 <ul class="divide-y divide-gray-100 text-sm">

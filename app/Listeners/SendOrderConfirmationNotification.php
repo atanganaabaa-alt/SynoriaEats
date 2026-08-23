@@ -5,13 +5,11 @@ namespace App\Listeners;
 use App\Enums\OrderStatus;
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
-use App\Notifications\OrderLiveUpdate;
-use App\Services\Notifications\Notifier;
-use Illuminate\Support\Facades\Notification;
+use App\Services\Notifications\NotificationAudit;
 
 class SendOrderConfirmationNotification
 {
-    public function __construct(private Notifier $notifier) {}
+    public function __construct(private NotificationAudit $audit) {}
 
     public function handleOrderPlaced(OrderPlaced $event): void
     {
@@ -23,33 +21,20 @@ class SendOrderConfirmationNotification
             number_format($order->total, 0, ',', ' ')
         );
 
-        $this->notifier->send($order->delivery_phone, $clientMessage);
-
-        if ($order->customer) {
-            $order->customer->notify(new OrderLiveUpdate(
-                $order,
-                'Commande confirmée',
-                "{$order->number} · {$order->status->label()}"
-            ));
-        }
+        $this->audit->sms($order, $order->delivery_phone, $clientMessage);
+        $this->audit->inApp($order, $order->customer, 'Commande confirmée', "{$order->number} · {$order->status->label()}");
 
         if ($owner = $order->restaurant->owner) {
-            if ($owner->phone) {
-                $this->notifier->send(
-                    $owner->phone,
-                    sprintf(
-                        'SynoriaEats : nouvelle commande %s — %s FCFA. Consulte ton espace restaurateur.',
-                        $order->number,
-                        number_format($order->total, 0, ',', ' ')
-                    )
-                );
-            }
-
-            $owner->notify(new OrderLiveUpdate(
+            $this->audit->sms(
                 $order,
-                'Nouvelle commande',
-                "{$order->number} · {$order->restaurant->name}"
-            ));
+                $owner->phone,
+                sprintf(
+                    'SynoriaEats : nouvelle commande %s — %s FCFA. Consulte ton espace restaurateur.',
+                    $order->number,
+                    number_format($order->total, 0, ',', ' ')
+                )
+            );
+            $this->audit->inApp($order, $owner, 'Nouvelle commande', "{$order->number} · {$order->restaurant->name}");
         }
     }
 
@@ -63,28 +48,22 @@ class SendOrderConfirmationNotification
             $order->status->label()
         );
 
-        $this->notifier->send($order->delivery_phone, $message);
-
-        $recipients = collect([$order->customer, $order->courier, $order->restaurant->owner])
-            ->filter()
-            ->unique('id');
-
-        Notification::send($recipients, new OrderLiveUpdate(
-            $order,
-            'Mise à jour commande',
-            "{$order->number} · {$order->status->label()}"
-        ));
+        $this->audit->sms($order, $order->delivery_phone, $message);
+        $this->audit->inApp($order, $order->customer, 'Mise à jour commande', "{$order->number} · {$order->status->label()}");
+        $this->audit->inApp($order, $order->restaurant->owner, 'Mise à jour commande', "{$order->number} · {$order->status->label()}");
+        $this->audit->inApp($order, $order->courier, 'Mise à jour commande', "{$order->number} · {$order->status->label()}");
 
         if ($order->courier?->phone && in_array($order->status, [
             OrderStatus::Ready,
             OrderStatus::OutForDelivery,
             OrderStatus::Delivered,
         ], true)) {
-            $this->notifier->send($order->courier->phone, $message);
+            $this->audit->sms($order, $order->courier->phone, $message);
         }
 
         if ($order->status === OrderStatus::Ready && $order->restaurant->owner?->phone) {
-            $this->notifier->send(
+            $this->audit->sms(
+                $order,
                 $order->restaurant->owner->phone,
                 sprintf('SynoriaEats : commande %s prête — en attente d’un livreur.', $order->number)
             );

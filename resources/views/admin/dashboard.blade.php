@@ -12,6 +12,7 @@
                 <a href="{{ route('admin.users.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Comptes</a>
                 <a href="{{ route('admin.restaurants.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Restaurants</a>
                 <a href="{{ route('admin.couriers.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Livreurs</a>
+                <a href="{{ route('admin.orders.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Audit commandes</a>
                 <a href="{{ route('admin.commissions.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Commissions</a>
             </nav>
         </div>
@@ -75,7 +76,9 @@
                 <ul class="divide-y divide-gray-100 text-sm">
                     @forelse ($recentOrders as $order)
                         <li class="py-3 flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <span>{{ $order->number }} · {{ $order->restaurant->name }} · {{ $order->customer->name }}</span>
+                            <a href="{{ route('admin.orders.show', $order) }}" class="text-emerald-700 hover:underline">
+                                {{ $order->number }} · {{ $order->restaurant->name }} · {{ $order->customer->name }}
+                            </a>
                             <span class="text-gray-500">{{ $order->status->label() }} · {{ number_format($order->total, 0, ',', ' ') }} FCFA</span>
                         </li>
                     @empty

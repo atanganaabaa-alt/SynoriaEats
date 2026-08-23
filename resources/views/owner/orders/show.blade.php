@@ -19,6 +19,8 @@
                 <p><span class="text-gray-500">Paiement :</span> {{ $order->payment_method->label() }} · {{ $order->payment_status->label() }}</p>
             </div>
 
+            <x-order-timeline :order="$order" :poll="true" />
+
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <h3 class="font-semibold mb-3">Articles</h3>
                 <ul class="divide-y divide-gray-100 text-sm">

@@ -14,5 +14,6 @@ class OrderStatusChanged
     public function __construct(
         public Order $order,
         public OrderStatus $previousStatus,
+        public ?\App\Models\User $actor = null,
     ) {}
 }

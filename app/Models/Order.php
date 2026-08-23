@@ -86,6 +86,16 @@ class Order extends Model
         return $this->hasOne(Review::class);
     }
 
+    public function statusEvents(): HasMany
+    {
+        return $this->hasMany(OrderStatusEvent::class)->orderBy('created_at')->orderBy('id');
+    }
+
+    public function notificationDeliveries(): HasMany
+    {
+        return $this->hasMany(NotificationDelivery::class)->latest();
+    }
+
     public function isLiveTrackingActive(): bool
     {
         return $this->status === OrderStatus::OutForDelivery;
