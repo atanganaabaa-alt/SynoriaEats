@@ -6,12 +6,19 @@
     <x-input-error :messages="$errors->get('name')" class="mt-2" />
 </div>
 
-<div>
-    <x-input-label for="address" value="Adresse" />
-    <x-text-input id="address" name="address" class="block mt-1 w-full" :value="old('address', $r->address ?? '')" required />
-    <x-input-error :messages="$errors->get('address')" class="mt-2" />
-</div>
-
+    <div>
+        <x-input-label for="address" value="Adresse" />
+        <x-text-input id="address" name="address" class="block mt-1 w-full" :value="old('address', $r->address ?? '')" required placeholder="Ex. Rue 1.234, Bastos, Yaoundé" />
+        <x-input-error :messages="$errors->get('address')" class="mt-2" />
+        <div class="mt-3">
+            <x-restaurant-address-map
+                address-input-id="address"
+                :lat="old('latitude', $r->latitude ?? null)"
+                :lng="old('longitude', $r->longitude ?? null)"
+            />
+        </div>
+        <x-input-error :messages="$errors->get('latitude')" class="mt-2" />
+    </div>
 <div>
     <x-input-label for="description" value="Description" />
     <textarea id="description" name="description" rows="3" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('description', $r->description ?? '') }}</textarea>

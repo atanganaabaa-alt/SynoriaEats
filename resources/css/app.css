@@ -48,7 +48,8 @@
     }
 
     .synoria-nav {
-        @apply bg-white/90 backdrop-blur-md border-b border-synoria-yellow/50;
+        /* Fond opaque : évite que le menu Compte (Profil / Déconnexion) soit flou */
+        @apply relative z-[100] border-b border-synoria-yellow/50 bg-white;
     }
 
     .synoria-hero-glow {

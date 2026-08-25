@@ -12,7 +12,10 @@ use Illuminate\Support\Collection;
 
 class RestaurantMatcher
 {
-    public function __construct(private DeliveryFeeCalculator $fees) {}
+    public function __construct(
+        private DeliveryFeeCalculator $fees,
+        private CameroonPlaceGeocoder $geocoder,
+    ) {}
 
     public const PRESETS = [
         'balanced' => [
@@ -65,18 +68,21 @@ class RestaurantMatcher
         $maxDistanceKm = (float) config('synoria.matching.max_distance_km', 12);
 
         $metrics = $restaurants->map(function (Restaurant $restaurant) use ($lat, $lng, $couriers) {
+            $coords = $this->restaurantCoordinates($restaurant);
             $distanceKm = null;
-            if ($restaurant->latitude !== null && $restaurant->longitude !== null) {
+            if ($coords !== null) {
                 $distanceKm = $this->fees->distanceKm(
                     $lat,
                     $lng,
-                    (float) $restaurant->latitude,
-                    (float) $restaurant->longitude
+                    $coords['lat'],
+                    $coords['lng']
                 );
             }
 
             $avgPrice = $this->averageDishPrice($restaurant);
-            $estimatedFee = $this->fees->forRestaurant($restaurant, $lat, $lng, (int) $avgPrice);
+            $estimatedFee = $coords !== null
+                ? $this->fees->forRestaurant($restaurant, $lat, $lng, (int) $avgPrice)
+                : (int) ($restaurant->delivery_fee ?? 0) + 1500;
             $nearbyCouriers = $this->nearbyCourierCount($restaurant, $couriers);
 
             return [
@@ -86,6 +92,7 @@ class RestaurantMatcher
                 'estimated_fee' => $estimatedFee,
                 'nearby_couriers' => $nearbyCouriers,
                 'rating' => (float) $restaurant->rating,
+                'place_label' => $coords['label'] ?? null,
             ];
         });
 
@@ -122,12 +129,18 @@ class RestaurantMatcher
             $restaurant = $row['restaurant'];
             $distanceKm = $row['distance_km'];
 
-            if ($strictDistance && $distanceKm !== null && $distanceKm > $maxDistanceKm) {
-                return null;
+            if ($strictDistance) {
+                // Sans position exploitable, on ne peut pas livrer « proche » : on exclut.
+                if ($distanceKm === null) {
+                    return null;
+                }
+                if ($distanceKm > $maxDistanceKm) {
+                    return null;
+                }
             }
 
             $dimensionScores = [
-                'distance' => $this->normalizeLowerIsBetter($distanceKm, $minDistance, $maxDistance, 50),
+                'distance' => $this->normalizeLowerIsBetter($distanceKm, $minDistance, $maxDistance, 20),
                 'price' => $this->normalizeLowerIsBetter(
                     $row['avg_dish_price'] > 0 ? $row['avg_dish_price'] : null,
                     $minPrice,
@@ -154,13 +167,19 @@ class RestaurantMatcher
             $restaurant->setAttribute('match_highlights', $highlights);
             $restaurant->setAttribute('match_dimension_scores', $dimensionScores);
             $restaurant->setAttribute('match_weights', $weights);
+            $restaurant->setAttribute('place_label', $row['place_label'] ?? null);
 
             return $restaurant;
         })->filter()->values();
 
         $this->assignBadges($ranked);
 
-        return $ranked->sortByDesc(fn (Restaurant $r) => (int) $r->match_score)->values();
+        return $ranked
+            ->sortBy([
+                fn (Restaurant $r) => -1 * (int) $r->match_score,
+                fn (Restaurant $r) => $r->distance_km ?? 9999,
+            ])
+            ->values();
     }
 
     public function defaultWeights(): array
@@ -332,7 +351,8 @@ class RestaurantMatcher
      */
     private function nearbyCourierCount(Restaurant $restaurant, Collection $couriers): int
     {
-        if ($restaurant->latitude === null || $restaurant->longitude === null) {
+        $coords = $this->restaurantCoordinates($restaurant);
+        if ($coords === null) {
             return 0;
         }
 
@@ -340,7 +360,7 @@ class RestaurantMatcher
         $freshMinutes = (int) config('synoria.matching.courier_fresh_minutes', 45);
 
         return $couriers
-            ->filter(function (User $courier) use ($restaurant, $radiusKm, $freshMinutes) {
+            ->filter(function (User $courier) use ($coords, $radiusKm, $freshMinutes) {
                 if ($courier->last_lat === null || $courier->last_lng === null) {
                     return false;
                 }
@@ -350,8 +370,8 @@ class RestaurantMatcher
                 }
 
                 $km = $this->fees->distanceKm(
-                    (float) $restaurant->latitude,
-                    (float) $restaurant->longitude,
+                    $coords['lat'],
+                    $coords['lng'],
                     (float) $courier->last_lat,
                     (float) $courier->last_lng
                 );
@@ -359,5 +379,35 @@ class RestaurantMatcher
                 return $km <= $radiusKm;
             })
             ->count();
+    }
+
+    /**
+     * @return array{lat: float, lng: float, label: ?string}|null
+     */
+    public function restaurantCoordinates(Restaurant $restaurant): ?array
+    {
+        if ($restaurant->latitude !== null && $restaurant->longitude !== null) {
+            return [
+                'lat' => (float) $restaurant->latitude,
+                'lng' => (float) $restaurant->longitude,
+                'label' => null,
+            ];
+        }
+
+        $resolved = $this->geocoder->resolve(
+            $restaurant->address,
+            $restaurant->city ?? null,
+            $restaurant->neighborhood ?? null,
+        );
+
+        if ($resolved === null) {
+            return null;
+        }
+
+        return [
+            'lat' => $resolved['lat'],
+            'lng' => $resolved['lng'],
+            'label' => $resolved['label'],
+        ];
     }
 }

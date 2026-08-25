@@ -76,6 +76,11 @@ class User extends Authenticatable
         return $this->hasMany(Review::class, 'customer_id');
     }
 
+    public function conversationsIa(): HasMany
+    {
+        return $this->hasMany(ConversationIa::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;

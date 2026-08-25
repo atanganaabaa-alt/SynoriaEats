@@ -57,7 +57,10 @@ class Sprint7MatchingMapTest extends TestCase
         );
 
         $this->assertSame('Chez Proche', $ranked->first()->name);
-        $this->assertGreaterThan($ranked->last()->match_score, $ranked->first()->match_score);
+        $this->assertTrue(
+            $ranked->count() === 1 || $ranked->first()->match_score >= $ranked->last()->match_score
+        );
+        $this->assertFalse($ranked->contains(fn ($r) => $r->name === 'Chez Loin'));
     }
 
     public function test_catalog_with_location_uses_relevance_sort(): void
@@ -162,5 +165,66 @@ class Sprint7MatchingMapTest extends TestCase
                 'lng' => 11.5210,
             ])
             ->assertStatus(422);
+    }
+
+    public function test_odza_prefers_bastos_over_melen_and_excludes_ambam(): void
+    {
+        $bastos = Restaurant::factory()->create([
+            'name' => 'Chez Bastos',
+            'address' => 'Yaounde, Bastos',
+            'latitude' => null,
+            'longitude' => null,
+            'is_validated' => true,
+            'is_open' => true,
+            'delivery_fee' => 400,
+            'rating' => 4.0,
+        ]);
+        $melen = Restaurant::factory()->create([
+            'name' => 'Chez Melen',
+            'address' => 'GP Melen Yaounde',
+            'latitude' => null,
+            'longitude' => null,
+            'is_validated' => true,
+            'is_open' => true,
+            'delivery_fee' => 400,
+            'rating' => 4.0,
+        ]);
+        $ambam = Restaurant::factory()->create([
+            'name' => 'Chez Ambam',
+            'address' => 'Ambam, Nkoumekeke',
+            'latitude' => null,
+            'longitude' => null,
+            'is_validated' => true,
+            'is_open' => true,
+            'delivery_fee' => 400,
+            'rating' => 4.5,
+        ]);
+
+        foreach ([$bastos, $melen, $ambam] as $r) {
+            MenuItem::factory()->create([
+                'restaurant_id' => $r->id,
+                'category' => MenuCategory::Plats->value,
+                'price' => 3000,
+                'is_available' => true,
+            ]);
+        }
+
+        $odza = app(\App\Services\CameroonPlaceGeocoder::class)->point('odza');
+        $ranked = app(RestaurantMatcher::class)->rank(
+            Restaurant::query()->with('menuItems')->get(),
+            $odza['lat'],
+            $odza['lng'],
+            ['distance' => 4, 'price' => 1, 'fee' => 1, 'courier' => 1, 'rating' => 1],
+        );
+
+        $names = $ranked->pluck('name')->all();
+        $this->assertContains('Chez Bastos', $names);
+        $this->assertContains('Chez Melen', $names);
+        $this->assertNotContains('Chez Ambam', $names);
+        $this->assertTrue(
+            (float) $ranked->firstWhere('name', 'Chez Bastos')->distance_km
+            < (float) $ranked->firstWhere('name', 'Chez Melen')->distance_km
+        );
+        $this->assertSame('Chez Bastos', $ranked->first()->name);
     }
 }

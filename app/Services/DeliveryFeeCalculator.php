@@ -7,6 +7,8 @@ use Carbon\CarbonInterface;
 
 class DeliveryFeeCalculator
 {
+    public function __construct(private CameroonPlaceGeocoder $geocoder) {}
+
     /**
      * Haversine distance in kilometers.
      */
@@ -45,21 +47,37 @@ class DeliveryFeeCalculator
         $distanceKm = null;
         $zone = null;
 
-        if ($deliveryLat !== null && $deliveryLng !== null
-            && $restaurant->latitude !== null && $restaurant->longitude !== null) {
-            $distanceKm = $this->distanceKm(
-                (float) $restaurant->latitude,
-                (float) $restaurant->longitude,
-                $deliveryLat,
-                $deliveryLng
-            );
+        if ($deliveryLat !== null && $deliveryLng !== null) {
+            $restoLat = $restaurant->latitude !== null ? (float) $restaurant->latitude : null;
+            $restoLng = $restaurant->longitude !== null ? (float) $restaurant->longitude : null;
 
-            $breakdown['distance'] = $this->distanceComponent($distanceKm);
-            $zone = $this->resolveZone($deliveryLat, $deliveryLng);
-            if ($zone !== null) {
-                $zoneSurcharge = (int) config("synoria.delivery.zones.{$zone}.surcharge", 0);
-                if ($zoneSurcharge > 0) {
-                    $breakdown['zone_'.$zone] = $zoneSurcharge;
+            if ($restoLat === null || $restoLng === null) {
+                $resolved = $this->geocoder->resolve(
+                    $restaurant->address,
+                    $restaurant->city ?? null,
+                    $restaurant->neighborhood ?? null,
+                );
+                if ($resolved) {
+                    $restoLat = $resolved['lat'];
+                    $restoLng = $resolved['lng'];
+                }
+            }
+
+            if ($restoLat !== null && $restoLng !== null) {
+                $distanceKm = $this->distanceKm(
+                    $restoLat,
+                    $restoLng,
+                    $deliveryLat,
+                    $deliveryLng
+                );
+
+                $breakdown['distance'] = $this->distanceComponent($distanceKm);
+                $zone = $this->resolveZone($deliveryLat, $deliveryLng);
+                if ($zone !== null) {
+                    $zoneSurcharge = (int) config("synoria.delivery.zones.{$zone}.surcharge", 0);
+                    if ($zoneSurcharge > 0) {
+                        $breakdown['zone_'.$zone] = $zoneSurcharge;
+                    }
                 }
             }
         }

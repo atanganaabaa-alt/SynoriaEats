@@ -41,12 +41,13 @@ class StoreRestaurantRequest extends FormRequest
         $data = $this->safe()->except(['logo', 'cover']);
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(5));
         $data['owner_id'] = $this->user()->id;
-        $data['is_open'] = $this->boolean('is_open', true);
+        // Un resto non validé ne doit jamais être ouvert au catalogue public.
         $approved = $this->user()?->isAdmin() ?? false;
         $data['is_validated'] = $approved;
         $data['status'] = $approved
             ? \App\Enums\ApprovalStatus::Approved
             : \App\Enums\ApprovalStatus::Pending;
+        $data['is_open'] = $approved ? $this->boolean('is_open', false) : false;
         $data['prep_time_min'] = $data['prep_time_min'] ?? 20;
         $data['prep_time_max'] = $data['prep_time_max'] ?? 40;
         $data['delivery_fee'] = $data['delivery_fee'] ?? 0;

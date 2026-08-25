@@ -62,9 +62,14 @@ return [
 
     'companion' => [
         'enabled' => (bool) env('SYNORIA_COMPANION_ENABLED', true),
+        'name' => env('SYNORIA_AI_NAME', 'Amina'),
+        // local (gratuit, défaut) | openai | anthropic
+        'provider' => env('SYNORIA_AI_PROVIDER', 'local'),
         'api_key' => env('OPENAI_API_KEY'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
         'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
+        'anthropic_model' => env('ANTHROPIC_MODEL', 'claude-3-5-haiku-latest'),
     ],
 
 ];

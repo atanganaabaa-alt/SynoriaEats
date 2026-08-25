@@ -1,13 +1,14 @@
-# Déploiement SynoriaEats sur o2switch (1ʳᵉ version)
+# Déploiement SynoriaEats sur o2switch
 
-Guide **pas à pas** pour mettre en ligne SynoriaEats sur un hébergement **mutualisé o2switch** (cPanel).
+Guide **pas à pas** pour mettre en ligne SynoriaEats sur un hébergement **mutualisé o2switch** (cPanel).  
+**Dernière mise à jour :** 23 août 2026 (sprints 1–9).
 
 Références utiles o2switch :
 - [Accès SSH](https://faq.o2switch.fr/)
 - [Installer Composer](https://faq.o2switch.fr/guides/php/installer-composer/)
 - Bases MySQL / PostgreSQL via les assistants cPanel
 
-> SynoriaEats exige **PHP ≥ 8.3**. Sur o2switch, MySQL est le plus simple pour la v1 (PostgreSQL est aussi proposé si tu préfères rester aligné avec le `.env.example`).
+> SynoriaEats exige **PHP ≥ 8.3**. Sur o2switch, **MySQL** est le plus simple pour la v1.
 
 ---
 
@@ -119,14 +120,13 @@ ssh -T git@github.com
 
 ---
 
-## 5sy. Cloner le projet (hors de public_html)
+## 5. Cloner le projet (hors de public_html)
 
 ```bash
 cd ~
 git clone git@github.com:atanganaabaa-alt/SynoriaEats.git synoriaeats
 cd ~/synoriaeats
 git checkout master
-# optionnel : git checkout sprint-4
 ```
 
 Structure attendue :

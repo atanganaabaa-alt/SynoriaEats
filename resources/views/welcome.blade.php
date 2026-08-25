@@ -66,6 +66,9 @@
                     </div>
                 </div>
             </main>
+
+            <x-companion-chat />
         </div>
+        @stack('scripts')
     </body>
 </html>

@@ -126,7 +126,7 @@ php artisan synoria:admin admin@synoria.test 'Admin123!'
 
 ## Sprint 9 — livré
 
-Compagnon culinaire (`/companion` + widget) : budget, menu, temps d’attente. Moteur local sans clé ; OpenAI optionnel via `OPENAI_API_KEY`.
+Agent IA **Amina** (`/companion` + widget) : mode **local gratuit** par défaut (mémoire `conversations_ia` + menu réel). Cloud OpenAI/Claude optionnel ; en cas de quota, fallback auto en local.
 
 ## Docs
 

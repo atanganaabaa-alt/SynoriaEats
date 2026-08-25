@@ -281,16 +281,30 @@ Pages utiles :
 | `/owner/orders` | Commandes resto |
 | `/courier/missions` | Missions livreur |
 
-### Compagnon (Sprint 9)
+### Agent IA Amina (Sprint 9)
 
-Sur catalogue / fiche resto / commande : bouton **Compagnon** (bas gauche), ou page `/companion`.
+Sur **accueil**, catalogue, fiche resto et écran commande : bouton **Amina** (bas gauche), ou page `/companion`.
 
-Exemples :
-- `J’ai 5000 FCFA`
-- `Que me recommandes-tu ?`
-- `Combien de temps d’attente ?`
+**Par défaut = gratuit** (`SYNORIA_AI_PROVIDER=local`) : Amina répond sans crédits OpenAI, avec mémoire en base (`conversations_ia`) et le menu réel.
 
-Sans `OPENAI_API_KEY` → réponses locales basées sur le menu réel. Avec clé → mode IA + fallback local.
+Optionnel cloud (payant / freemium) :
+```env
+SYNORIA_AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+```
+Si le cloud échoue (quota 429, etc.), elle repasse automatiquement en local.
+
+### GPS restaurants (adresse → carte)
+
+À l’onboarding / création / modification d’un resto :
+1. Saisie de l’adresse → recherche OpenStreetMap (Nominatim) + fallback quartiers Cameroun
+2. Carte Leaflet avec pin (déplaçable)
+3. `latitude` / `longitude` enregistrés pour comparer la distance client ↔ resto
+
+```bash
+php artisan synoria:geocode-restaurants
+php artisan synoria:geocode-restaurants --force
+```
 
 ---
 
@@ -304,7 +318,7 @@ Sans `OPENAI_API_KEY` → réponses locales basées sur le menu réel. Avec clé
 | `APP_URL` incorrect | mettre `http://127.0.0.1:8000` (pas d’IP inversée) |
 | Port 8000 pris | `php artisan serve --port=8001` |
 | Migration manquante | `php artisan migrate` |
-| Compagnon muet | recharger la page ; vérifier Alpine/Vite chargé |
+| Compagnon / Amina muet | `OPENAI_API_KEY` dans `.env` + `php artisan config:clear` ; recharger la page |
 | Déconnexion impossible | utiliser **Changer de compte** dans la nav |
 
 Logs :

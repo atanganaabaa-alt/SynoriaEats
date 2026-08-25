@@ -111,6 +111,44 @@ class Sprint5AuthApprovalTest extends TestCase
         $this->actingAs($owner)
             ->get(route('owner.restaurants.show', $restaurant))
             ->assertOk();
+
+        $this->actingAs($owner)
+            ->get(route('owner.pending'))
+            ->assertRedirect(route('owner.restaurants.index'));
+
+        $this->actingAs($owner)
+            ->get(route('owner.restaurants.index'))
+            ->assertOk()
+            ->assertSee($restaurant->name)
+            ->assertSee('Approuvé');
+    }
+
+    public function test_additional_restaurant_stays_pending_and_closed(): void
+    {
+        $owner = User::factory()->restaurantOwner()->create([
+            'approval_status' => ApprovalStatus::Approved,
+            'approved_at' => now(),
+        ]);
+        Restaurant::factory()->create([
+            'owner_id' => $owner->id,
+            'status' => ApprovalStatus::Approved,
+            'is_validated' => true,
+            'is_open' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('owner.restaurants.store'), [
+                'name' => 'Deuxième Adresse',
+                'address' => 'Melen, Yaoundé',
+                'is_open' => '1',
+            ])
+            ->assertRedirect();
+
+        $second = Restaurant::query()->where('name', 'Deuxième Adresse')->first();
+        $this->assertNotNull($second);
+        $this->assertSame(ApprovalStatus::Pending, $second->status);
+        $this->assertFalse($second->is_validated);
+        $this->assertFalse($second->is_open);
     }
 
     public function test_unapproved_courier_cannot_claim_missions(): void

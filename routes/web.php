@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\CompanionController;
+use App\Http\Controllers\AiConversationController;
 use App\Http\Controllers\Courier\MissionController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
@@ -32,9 +32,10 @@ Route::post('/selection', [RestaurantController::class, 'savePreferences'])->nam
 Route::delete('/selection', [RestaurantController::class, 'resetPreferences'])->name('restaurants.preferences.reset');
 Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show'])->name('restaurants.show');
 
-Route::get('/companion', [CompanionController::class, 'show'])->name('companion.show');
-Route::post('/companion/message', [CompanionController::class, 'message'])->name('companion.message');
-Route::post('/companion/reset', [CompanionController::class, 'reset'])->name('companion.reset');
+Route::get('/companion', [AiConversationController::class, 'show'])->name('companion.show');
+Route::get('/companion/history', [AiConversationController::class, 'history'])->name('companion.history');
+Route::post('/companion/message', [AiConversationController::class, 'message'])->name('companion.message');
+Route::post('/companion/reset', [AiConversationController::class, 'reset'])->name('companion.reset');
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
@@ -118,10 +119,11 @@ Route::middleware('auth')->group(function () {
         Route::post('missions/{order}/location', [MissionController::class, 'location'])->name('missions.location');
     });
 
-    Route::middleware('role:restaurant_owner')->prefix('owner')->name('owner.')->group(function () {
+    Route::middleware('role:restaurant_owner,admin')->prefix('owner')->name('owner.')->group(function () {
         Route::get('pending', [OwnerOnboardingController::class, 'pending'])->name('pending');
         Route::get('onboarding', [OwnerOnboardingController::class, 'create'])->name('onboarding');
         Route::post('onboarding', [OwnerOnboardingController::class, 'store'])->name('onboarding.store');
+        Route::post('geocode', \App\Http\Controllers\Owner\GeocodeController::class)->name('geocode');
     });
 
     Route::middleware(['role:restaurant_owner,admin', 'approved'])->prefix('owner')->name('owner.')->group(function () {

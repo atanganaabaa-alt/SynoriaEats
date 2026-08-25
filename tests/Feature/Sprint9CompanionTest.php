@@ -4,47 +4,106 @@ namespace Tests\Feature;
 
 use App\Enums\MenuCategory;
 use App\Enums\OrderStatus;
+use App\Models\ConversationIa;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class Sprint9CompanionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_companion_page_is_available(): void
+    protected function setUp(): void
     {
-        $this->get(route('companion.show'))
-            ->assertOk()
-            ->assertSee('Compagnon culinaire');
+        parent::setUp();
+
+        config([
+            'synoria.companion.enabled' => true,
+            'synoria.companion.provider' => 'local',
+            'synoria.companion.name' => 'Amina',
+        ]);
     }
 
-    public function test_companion_suggests_dishes_within_budget(): void
+    public function test_local_agent_holds_conversation_and_persists_history(): void
     {
+        $restaurant = Restaurant::factory()->create([
+            'name' => 'Grill Bastos',
+            'is_validated' => true,
+            'is_open' => true,
+        ]);
+        MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Poulet DG',
+            'category' => MenuCategory::Plats->value,
+            'price' => 3500,
+            'is_available' => true,
+        ]);
+
+        $customer = User::factory()->create();
+
+        $hi = $this->actingAs($customer)
+            ->postJson(route('companion.message'), [
+                'message' => 'wassup tu me parle pas ?',
+            ])
+            ->assertOk()
+            ->assertJsonPath('mode', 'local')
+            ->assertJsonPath('agent', 'Amina')
+            ->json('reply');
+
+        $this->assertStringContainsString('Amina', $hi);
+        $this->assertStringNotContainsString('—', $hi);
+
+        $followUp = $this->actingAs($customer)
+            ->postJson(route('companion.message'), [
+                'message' => 'J’ai 5000 FCFA, quelque chose de local et copieux',
+                'restaurant_id' => $restaurant->id,
+            ])
+            ->assertOk()
+            ->json('reply');
+
+        $this->assertStringContainsString('Poulet DG', $followUp);
+        $this->assertTrue(
+            str_contains($followUp, '5 000') || str_contains($followUp, '5000'),
+            'Expected budget mention in reply'
+        );
+
+        $this->assertDatabaseCount('conversations_ia', 4);
+
+        $history = $this->actingAs($customer)
+            ->getJson(route('companion.history'))
+            ->assertOk()
+            ->json('history');
+
+        $this->assertCount(4, $history);
+    }
+
+    public function test_openai_quota_falls_back_to_local_for_free(): void
+    {
+        config([
+            'synoria.companion.provider' => 'openai',
+            'synoria.companion.api_key' => 'sk-proj-test-key-valid-looking',
+            'synoria.companion.base_url' => 'https://api.openai.com/v1',
+            'synoria.companion.model' => 'gpt-4o-mini',
+        ]);
+
+        Http::fake([
+            'api.openai.com/*' => Http::response(['error' => ['message' => 'quota']], 429),
+        ]);
+
         $restaurant = Restaurant::factory()->create([
             'name' => 'Chez Budget',
             'is_validated' => true,
             'is_open' => true,
-            'delivery_fee' => 500,
-            'prep_time_min' => 20,
-            'prep_time_max' => 35,
         ]);
-
         MenuItem::factory()->create([
             'restaurant_id' => $restaurant->id,
             'name' => 'Riz sauce',
             'category' => MenuCategory::Plats->value,
             'price' => 2500,
-            'is_available' => true,
-        ]);
-        MenuItem::factory()->create([
-            'restaurant_id' => $restaurant->id,
-            'name' => 'Menu VIP',
-            'category' => MenuCategory::Plats->value,
-            'price' => 12000,
             'is_available' => true,
         ]);
 
@@ -53,14 +112,14 @@ class Sprint9CompanionTest extends TestCase
             'restaurant_id' => $restaurant->id,
         ])
             ->assertOk()
-            ->assertJsonPath('mode', 'local')
+            ->assertJsonPath('mode', 'local_fallback')
             ->json('reply');
 
         $this->assertStringContainsString('Riz sauce', $reply);
-        $this->assertStringNotContainsString('Menu VIP', $reply);
+        $this->assertStringNotContainsString('quota', mb_strtolower($reply));
     }
 
-    public function test_companion_explains_active_order_wait(): void
+    public function test_agent_explains_active_order_wait(): void
     {
         $customer = User::factory()->create();
         $restaurant = Restaurant::factory()->create([
@@ -77,12 +136,29 @@ class Sprint9CompanionTest extends TestCase
 
         $reply = $this->actingAs($customer)
             ->postJson(route('companion.message'), [
-                'message' => 'Combien de temps d’attente ?',
+                'message' => 'Où en est ma commande ?',
             ])
             ->assertOk()
             ->json('reply');
 
         $this->assertStringContainsString($order->number, $reply);
         $this->assertStringContainsString('En préparation', $reply);
+    }
+
+    public function test_reset_clears_persisted_conversation(): void
+    {
+        $customer = User::factory()->create();
+
+        $this->actingAs($customer)
+            ->postJson(route('companion.message'), ['message' => 'Salut'])
+            ->assertOk();
+
+        $this->assertDatabaseCount('conversations_ia', 2);
+
+        $this->actingAs($customer)
+            ->postJson(route('companion.reset'))
+            ->assertOk();
+
+        $this->assertDatabaseCount('conversations_ia', 0);
     }
 }

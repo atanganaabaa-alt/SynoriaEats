@@ -47,6 +47,11 @@
                 <p>{{ $restaurant->address }}</p>
                 <p>{{ $restaurant->category }} · {{ $restaurant->opening_hours }}</p>
                 <p>Livraison de base {{ number_format($restaurant->delivery_fee, 0, ',', ' ') }} FCFA, {{ $restaurant->prep_time_min }} à {{ $restaurant->prep_time_max }} min</p>
+                @if ($restaurant->latitude && $restaurant->longitude)
+                    <p class="text-emerald-700">GPS carte : {{ number_format((float) $restaurant->latitude, 5, ',', '') }}, {{ number_format((float) $restaurant->longitude, 5, ',', '') }}</p>
+                @else
+                    <p class="text-amber-700">Pas encore de GPS. Modifie l’adresse et utilise « Placer sur la carte ».</p>
+                @endif
                 @if ($restaurant->menuItems->isEmpty())
                     <p class="text-amber-700">Ajoute plats, boissons ou accompagnements pour apparaître au catalogue.</p>
                 @elseif (! $restaurant->is_validated)

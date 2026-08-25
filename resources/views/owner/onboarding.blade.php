@@ -16,8 +16,15 @@
                 </div>
                 <div>
                     <x-input-label for="restaurant_address" value="Adresse" />
-                    <x-text-input id="restaurant_address" class="block mt-1 w-full" type="text" name="restaurant_address" :value="old('restaurant_address')" required />
+                    <x-text-input id="restaurant_address" class="block mt-1 w-full" type="text" name="restaurant_address" :value="old('restaurant_address')" required placeholder="Ex. GP Melen, Yaoundé" />
                     <x-input-error :messages="$errors->get('restaurant_address')" class="mt-2" />
+                    <div class="mt-3">
+                        <x-restaurant-address-map
+                            address-input-id="restaurant_address"
+                            :lat="old('latitude')"
+                            :lng="old('longitude')"
+                        />
+                    </div>
                 </div>
                 <div>
                     <x-input-label for="commerce_register" value="Registre de commerce / RCCM" />

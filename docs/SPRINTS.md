@@ -128,16 +128,17 @@ Le catalogue se trie selon ta position. Pendant la course, une carte OSM suit li
 ### Résultat visible
 On voit qui a passé la commande à « en préparation » et à quelle heure. Si un SMS échoue, l’admin le voit, la commande continue.
 
-## Sprint 9 — Agent IA compagnon ✅
+## Sprint 9 — Agent IA conversationnel (Amina) ✅
 **Août 2026**
 
-- Compagnon culinaire contextuel (widget chat + page `/companion`).
-- Contexte : menu du restaurant, panier, commande active (statut / temps d’attente).
-- Moteur local par défaut (budget, recommandations, délais) — fonctionne sans clé API.
-- Mode OpenAI optionnel via `OPENAI_API_KEY` (fallback automatique si l’API échoue).
+- Agent LLM conversationnel (**Amina**) : OpenAI ou Claude via API — pas d’arbre de décision.
+- Mémoire persistante en base (`conversations_ia`, liée au `user_id` / session invité).
+- Contexte envoyé à chaque tour : personnalité, historique récent, menu, catalogue, panier, commande active, préférences.
+- Widget chat sur accueil, catalogue, fiche resto, écran d’attente commande + page `/companion`.
+- `AiConversationController` + `ConversationalAiAgent`.
 
 ### Résultat visible
-Sur un resto, tu demandes « j’ai 5000 FCFA » et le compagnon propose des plats du menu réel. Avec une commande en cours, il explique l’attente.
+Tu papotes avec Amina ; elle se souvient de ton budget / goûts et recommande des plats réels en expliquant pourquoi. Sans clé API, elle indique clairement qu’elle n’est pas branchée.
 
 ---
 

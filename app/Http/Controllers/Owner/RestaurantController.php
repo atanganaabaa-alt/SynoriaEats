@@ -7,13 +7,17 @@ use App\Http\Requests\StoreRestaurantRequest;
 use App\Http\Requests\UpdateRestaurantRequest;
 use App\Models\Restaurant;
 use App\Services\CloudinaryUploader;
+use App\Services\RestaurantGeocoder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class RestaurantController extends Controller
 {
-    public function __construct(private CloudinaryUploader $media) {}
+    public function __construct(
+        private CloudinaryUploader $media,
+        private RestaurantGeocoder $geocoder,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -42,11 +46,21 @@ class RestaurantController extends Controller
             $data['cover_url'] = $this->media->upload($request->file('cover'), 'restaurants/covers');
         }
 
+        $data = $this->geocoder->applyToRestaurantData($data);
+
         $restaurant = Restaurant::query()->create($data);
+
+        $message = $restaurant->isApproved()
+            ? 'Restaurant créé avec position carte.'
+            : 'Restaurant créé avec position carte. Il reste en attente de validation admin avant d’apparaître au catalogue.';
+
+        if ($restaurant->latitude === null || $restaurant->longitude === null) {
+            $message .= ' Attention : adresse non localisée. Modifie l’adresse et reclique « Placer sur la carte ».';
+        }
 
         return redirect()
             ->route('owner.restaurants.show', $restaurant)
-            ->with('status', 'Restaurant créé.');
+            ->with('status', $message);
     }
 
     public function show(Request $request, Restaurant $restaurant): View
@@ -70,7 +84,12 @@ class RestaurantController extends Controller
         $this->authorize('update', $restaurant);
 
         $data = $request->safe()->except(['logo', 'cover']);
-        $data['is_open'] = $request->boolean('is_open');
+
+        if ($request->has('is_open')) {
+            $data['is_open'] = $restaurant->isApproved()
+                ? $request->boolean('is_open')
+                : false;
+        }
 
         if ($request->hasFile('logo')) {
             $this->media->deleteIfLocal($restaurant->logo_url);
@@ -80,6 +99,19 @@ class RestaurantController extends Controller
         if ($request->hasFile('cover')) {
             $this->media->deleteIfLocal($restaurant->cover_url);
             $data['cover_url'] = $this->media->upload($request->file('cover'), 'restaurants/covers');
+        }
+
+        $addressChanged = isset($data['address']) && $data['address'] !== $restaurant->address;
+        $missingCoords = $restaurant->latitude === null || $restaurant->longitude === null;
+        $manualCoords = filled($data['latitude'] ?? null) && filled($data['longitude'] ?? null);
+
+        if ($manualCoords) {
+            // Pin glissé / placé depuis le formulaire
+        } elseif ($addressChanged || $missingCoords) {
+            $data = $this->geocoder->applyToRestaurantData([
+                ...$restaurant->only(['address', 'latitude', 'longitude']),
+                ...$data,
+            ], force: $addressChanged);
         }
 
         $restaurant->update($data);
