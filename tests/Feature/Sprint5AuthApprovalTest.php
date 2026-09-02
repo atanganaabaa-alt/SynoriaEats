@@ -52,10 +52,11 @@ class Sprint5AuthApprovalTest extends TestCase
             'restaurant_address' => 'Bastos, Yaoundé',
             'commerce_register' => UploadedFile::fake()->image('rccm.jpg'),
             'identity' => UploadedFile::fake()->image('cni.jpg'),
-        ])->assertRedirect(route('dashboard', absolute: false));
+        ])->assertRedirect(route('verification.notice'));
 
         $owner = User::query()->where('email', 'amina@example.com')->first();
         $this->assertNotNull($owner);
+        $owner->markEmailAsVerified();
         $this->assertSame(ApprovalStatus::Pending, $owner->approval_status);
 
         $restaurant = Restaurant::query()->where('name', 'Chez Amina')->first();
@@ -198,6 +199,51 @@ class Sprint5AuthApprovalTest extends TestCase
         $this->get(route('restaurants.index'))
             ->assertOk()
             ->assertDontSee('Secret Grill');
+    }
+
+    public function test_restaurant_owner_can_register_without_rccm(): void
+    {
+        Storage::fake('public');
+
+        $this->post(route('register'), [
+            'name' => 'Marie',
+            'email' => 'marie@example.com',
+            'role' => UserRole::RestaurantOwner->value,
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'restaurant_name' => 'Chez Marie',
+            'restaurant_address' => 'Odza, Yaoundé',
+            'identity' => UploadedFile::fake()->image('cni.jpg'),
+        ])->assertRedirect(route('verification.notice'));
+
+        $restaurant = Restaurant::query()->where('name', 'Chez Marie')->first();
+        $this->assertNotNull($restaurant);
+        $this->assertSame(1, $restaurant->documents()->count());
+    }
+
+    public function test_admin_can_approve_restaurant_with_identity_only(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $owner = User::factory()->restaurantOwner()->create([
+            'approval_status' => ApprovalStatus::Pending,
+            'approved_at' => null,
+        ]);
+        $restaurant = Restaurant::factory()->pending()->create(['owner_id' => $owner->id]);
+        $restaurant->documents()->create([
+            'type' => \App\Enums\DocumentType::Identity,
+            'url' => 'restaurant-docs/cni.jpg',
+            'original_name' => 'cni.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.restaurants.update', $restaurant), [
+                'decision' => 'approved',
+                'notes' => 'Identité OK',
+                'checks' => ['docs_readable', 'identity_ok', 'address_ok'],
+            ])
+            ->assertRedirect();
+
+        $this->assertTrue($restaurant->fresh()->is_validated);
     }
 
     public function test_api_cannot_register_courier(): void

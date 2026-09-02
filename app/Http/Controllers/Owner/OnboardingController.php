@@ -54,7 +54,7 @@ class OnboardingController extends Controller
             'restaurant_address' => ['required', 'string', 'max:255'],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
-            'commerce_register' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+            'commerce_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'identity' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'proof_of_address' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
         ]);

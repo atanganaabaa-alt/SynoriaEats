@@ -2,14 +2,14 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
                     {{ __('Restaurants') }}
                 </h2>
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                     @if ($hasLocation)
-                        Sélectionnés pour toi selon ta position, les prix et la disponibilité des livreurs.
+                        {{ __('Sélectionnés pour toi selon ta position, les prix et la disponibilité des livreurs.') }}
                     @else
-                        Nous préparons une sélection personnalisée dès que ta position est connue.
+                        {{ __('Nous préparons une sélection personnalisée dès que ta position est connue.') }}
                     @endif
                 </p>
             </div>
@@ -18,7 +18,7 @@
                 <svg class="h-4 w-4 text-synoria-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
-                Personnaliser ma sélection
+                {{ __('Personnaliser ma sélection') }}
             </a>
         </div>
     </x-slot>
@@ -31,26 +31,8 @@
                 </div>
             @endif
 
-            @if ($hasLocation)
-                <div class="synoria-panel rounded-2xl px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <p class="text-sm font-semibold text-synoria-ink">Sélection automatique active</p>
-                        <p class="text-xs text-synoria-ink-soft mt-1">
-                            @if ($hasCustomPreferences)
-                                Profil personnalisé appliqué.
-                            @else
-                                Nous comparons distance, prix, frais de livraison, notes et livreurs disponibles.
-                            @endif
-                        </p>
-                    </div>
-                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                        Position détectée
-                    </span>
-                </div>
-            @else
-                <div class="synoria-panel rounded-2xl px-5 py-4">
-                    <p id="geo-status" class="text-sm text-synoria-ink-soft">Localisation en cours…</p>
-                </div>
+            @if (! $hasLocation)
+                <p id="geo-status" class="text-xs text-synoria-ink-soft dark:text-gray-400">{{ __('Localisation en cours…') }}</p>
             @endif
 
             <form method="GET" class="synoria-panel rounded-2xl p-4">
@@ -63,10 +45,10 @@
                         type="search"
                         name="q"
                         value="{{ request('q') }}"
-                        placeholder="Rechercher un restaurant…"
+                        placeholder="{{ __('Rechercher un restaurant…') }}"
                         class="w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                     />
-                    <x-primary-button class="shrink-0">Rechercher</x-primary-button>
+                    <x-primary-button class="shrink-0">{{ __('Rechercher') }}</x-primary-button>
                 </div>
             </form>
 
@@ -76,14 +58,18 @@
                        class="block synoria-panel sm:rounded-2xl p-5 hover:ring-2 hover:ring-synoria-yellow/70 transition hover:-translate-y-0.5">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex gap-3 min-w-0">
-                                @if ($restaurant->coverPublicUrl() || $restaurant->logoPublicUrl())
-                                    <img src="{{ $restaurant->coverPublicUrl() ?? $restaurant->logoPublicUrl() }}"
+                                @if ($restaurant->coverThumbnailUrl() || $restaurant->logoThumbnailUrl())
+                                    <img src="{{ $restaurant->coverThumbnailUrl() ?? $restaurant->logoThumbnailUrl() }}"
                                          alt=""
+                                         loading="lazy"
+                                         decoding="async"
+                                         width="56"
+                                         height="56"
                                          class="h-14 w-14 rounded-lg object-cover shrink-0 ring-1 ring-synoria-yellow/30">
                                 @endif
                                 <div class="min-w-0">
                                     <h3 class="text-lg font-semibold text-synoria-ink">{{ $restaurant->name }}</h3>
-                                    <p class="text-sm text-synoria-green">{{ $restaurant->category }}</p>
+                                    <p class="text-sm text-synoria-green">{{ $restaurant->category ? __($restaurant->category) : '' }}</p>
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
@@ -130,11 +116,11 @@
                         @endif
                     </a>
                 @empty
-                    <div class="col-span-full bg-white shadow-sm sm:rounded-lg p-8 text-center space-y-3 text-gray-500">
-                        <p>Aucun restaurant disponible près de toi pour l’instant.</p>
-                        <p class="text-sm">Essaie de personnaliser ta sélection ou élargis ta zone.</p>
-                        <a href="{{ route('restaurants.preferences') }}" class="inline-flex text-sm font-medium text-emerald-700 hover:underline">
-                            Ajuster mes préférences
+                    <div class="col-span-full synoria-panel sm:rounded-lg p-8 text-center space-y-3 text-synoria-ink-soft dark:text-gray-400">
+                        <p>{{ __('Aucun restaurant disponible près de toi pour l\'instant.') }}</p>
+                        <p class="text-sm">{{ __('Essaie de personnaliser ta sélection ou élargis ta zone.') }}</p>
+                        <a href="{{ route('restaurants.preferences') }}" class="inline-flex text-sm font-medium text-synoria-green hover:underline">
+                            {{ __('Ajuster mes préférences') }}
                         </a>
                     </div>
                 @endforelse

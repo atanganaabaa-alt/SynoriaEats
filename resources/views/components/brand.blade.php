@@ -22,7 +22,7 @@
         class="{{ $iconClass }} rounded-2xl object-cover shadow-sm ring-1 ring-synoria-ink/10 group-hover:shadow-synoria transition duration-200"
     >
     @if ($withWordmark && ! $markOnly)
-        <span class="{{ $textClass }} font-semibold tracking-tight text-synoria-ink leading-none">
+        <span class="{{ $textClass }} font-semibold tracking-tight text-synoria-ink dark:text-white leading-none">
             Synoria<span class="text-synoria-green">Eats</span>
         </span>
     @endif

@@ -62,6 +62,6 @@ class CheckoutController extends Controller
 
         return redirect()
             ->route('orders.show', $order)
-            ->with('status', 'Commande confirmée et payée.');
+            ->with('status', __('Commande confirmée et payée.'));
     }
 }

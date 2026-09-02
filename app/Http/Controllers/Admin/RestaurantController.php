@@ -41,7 +41,6 @@ class RestaurantController extends Controller
         $restaurant->load(['owner', 'documents']);
 
         $requiredTypes = [
-            DocumentType::CommerceRegister,
             DocumentType::Identity,
         ];
 
@@ -76,14 +75,21 @@ class RestaurantController extends Controller
 
             if ($validated['decision'] === ApprovalStatus::Approved->value) {
                 $checks = collect($validated['checks'] ?? []);
-                $requiredChecks = ['docs_readable', 'identity_ok', 'address_ok', 'commerce_ok'];
+                $hasCommerceDoc = $restaurant->documents->contains(
+                    fn ($d) => $d->type === DocumentType::CommerceRegister
+                );
+                $requiredChecks = ['docs_readable', 'identity_ok', 'address_ok'];
+
+                if ($hasCommerceDoc) {
+                    $requiredChecks[] = 'commerce_ok';
+                }
 
                 foreach ($requiredChecks as $check) {
                     if (! $checks->contains($check)) {
                         return back()
                             ->withInput()
                             ->withErrors([
-                                'checks' => 'Coche les 4 points de vérification avant d’approuver le dossier.',
+                                'checks' => 'Coche tous les points de vérification avant d’approuver le dossier.',
                             ]);
                     }
                 }
@@ -92,14 +98,13 @@ class RestaurantController extends Controller
                     ->pluck('type')
                     ->map(fn ($type) => $type instanceof DocumentType ? $type->value : (string) $type);
 
-                $hasRequiredDocs = $types->contains(DocumentType::CommerceRegister->value)
-                    && $types->contains(DocumentType::Identity->value);
+                $hasRequiredDocs = $types->contains(DocumentType::Identity->value);
 
                 if (! $hasRequiredDocs) {
                     return back()
                         ->withInput()
                         ->withErrors([
-                            'checks' => 'RCCM et pièce d’identité sont obligatoires avant approbation.',
+                            'checks' => 'La pièce d’identité est obligatoire avant approbation.',
                         ]);
                 }
 

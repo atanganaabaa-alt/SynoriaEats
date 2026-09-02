@@ -148,6 +148,9 @@ php artisan synoria:admin admin@synoria.test 'Admin123!' --name="Admin Synoria"
 | Email | `admin@synoria.test` |
 | Mot de passe | celui que tu passes à `synoria:admin` (ex. `Admin123!`) |
 
+cd ~/synoriaeats
+php artisan synoria:admin admin@synoria.com 'Admin123!' --name="Admin"
+
 La commande **crée** le compte s’il n’existe pas, ou **met à jour** le mot de passe / rôle s’il existe déjà (min. 8 caractères).
 
 Ensuite : menu **Admin** → dashboard, restos, livreurs, audit commandes (`/admin/orders`).
@@ -165,9 +168,17 @@ Tu ne peux **pas** retrouver un ancien mot de passe : il est hashé. Il faut le 
 La base est vide → recrée l’admin :
 
 ```bash
-php artisan migrate:fresh
+php artisan migrate:fresh --seed
 php artisan synoria:admin admin@synoria.test 'Admin123!' --name="Admin Synoria"
 ```
+
+Le seed crée **4 restaurants camerounais** (ndolé, poulet DG, poisson braisé, etc.) avec photos :
+
+```bash
+php artisan db:seed --class=CameroonDemoSeeder
+```
+
+Compte resto démo : `owner.demo@synoriaeats.test` / `password`
 
 ---
 

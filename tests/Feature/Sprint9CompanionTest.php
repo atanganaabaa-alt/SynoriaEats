@@ -24,7 +24,7 @@ class Sprint9CompanionTest extends TestCase
         config([
             'synoria.companion.enabled' => true,
             'synoria.companion.provider' => 'local',
-            'synoria.companion.name' => 'Amina',
+            'synoria.companion.name' => 'Sara',
         ]);
     }
 
@@ -51,10 +51,10 @@ class Sprint9CompanionTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('mode', 'local')
-            ->assertJsonPath('agent', 'Amina')
+            ->assertJsonPath('agent', 'Sara')
             ->json('reply');
 
-        $this->assertStringContainsString('Amina', $hi);
+        $this->assertStringContainsString('Sara', $hi);
         $this->assertStringNotContainsString('—', $hi);
 
         $followUp = $this->actingAs($customer)

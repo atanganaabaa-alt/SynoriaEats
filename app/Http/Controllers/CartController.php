@@ -45,7 +45,7 @@ class CartController extends Controller
 
         return redirect()
             ->route('cart.show')
-            ->with('status', 'Plat ajouté au panier.');
+            ->with('status', __('Plat ajouté au panier.'));
     }
 
     public function update(Request $request, string $lineKey, CartService $cart): RedirectResponse
@@ -56,13 +56,13 @@ class CartController extends Controller
 
         $cart->updateQuantity($lineKey, (int) $validated['quantity']);
 
-        return redirect()->route('cart.show')->with('status', 'Panier mis à jour.');
+        return redirect()->route('cart.show')->with('status', __('Panier mis à jour.'));
     }
 
     public function destroy(CartService $cart): RedirectResponse
     {
         $cart->clear();
 
-        return redirect()->route('restaurants.index')->with('status', 'Panier vidé.');
+        return redirect()->route('restaurants.index')->with('status', __('Panier vidé.'));
     }
 }

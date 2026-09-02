@@ -3,13 +3,17 @@
         {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
     </div>
 
-    <!-- Session Status -->
+    @unless ($mailConfigured ?? true)
+        <div class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            {{ __('L’envoi d’emails n’est pas encore configuré sur ce serveur : contacte l’admin ou utilise la commande synoria:reset-password en SSH.') }}
+        </div>
+    @endunless
+
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
-        <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />

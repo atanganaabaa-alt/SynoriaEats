@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-2">
-            <a href="{{ route('restaurants.index') }}" class="text-sm text-emerald-700 hover:underline">← Retour aux restaurants</a>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Personnaliser ma sélection</h2>
-            <p class="text-sm text-gray-500">Choisis un profil ou ajuste finement ce qui compte pour toi.</p>
+            <a href="{{ route('restaurants.index') }}" class="text-sm text-emerald-700 hover:underline">← {{ __('Retour aux restaurants') }}</a>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ __('Personnaliser ma sélection') }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Choisis un profil ou ajuste finement ce qui compte pour toi.') }}</p>
         </div>
     </x-slot>
 
@@ -14,8 +14,8 @@
 
                 <section class="synoria-panel rounded-2xl p-6 space-y-4">
                     <div>
-                        <h3 class="text-lg font-semibold text-synoria-ink">Profils rapides</h3>
-                        <p class="text-sm text-synoria-ink-soft mt-1">Clique sur un profil pour préremplir les curseurs.</p>
+                        <h3 class="text-lg font-semibold text-synoria-ink dark:text-white">{{ __('Profils rapides') }}</h3>
+                        <p class="text-sm text-synoria-ink-soft mt-1">{{ __('Clique sur un profil pour préremplir les curseurs.') }}</p>
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -24,9 +24,9 @@
                                     data-preset="{{ $key }}"
                                     data-weights='@json($preset['weights'])'
                                     class="preset-card text-left rounded-2xl border p-4 transition
-                                        {{ $matchPreset === $key ? 'border-synoria-green bg-emerald-50/60 ring-2 ring-synoria-green/20' : 'border-synoria-yellow/30 bg-white hover:border-synoria-yellow/60' }}">
-                                <p class="font-semibold text-synoria-ink">{{ $preset['label'] }}</p>
-                                <p class="text-sm text-synoria-ink-soft mt-1">{{ $preset['description'] }}</p>
+                                        {{ $matchPreset === $key ? 'border-synoria-green bg-emerald-50/60 ring-2 ring-synoria-green/20 dark:bg-emerald-950/40' : 'border-synoria-yellow/30 bg-white hover:border-synoria-yellow/60 dark:bg-slate-900' }}">
+                                <p class="font-semibold text-synoria-ink dark:text-white">{{ __($preset['label']) }}</p>
+                                <p class="text-sm text-synoria-ink-soft mt-1">{{ __($preset['description']) }}</p>
                             </button>
                         @endforeach
                     </div>
@@ -34,17 +34,17 @@
 
                 <section class="synoria-panel rounded-2xl p-6 space-y-5">
                     <div>
-                        <h3 class="text-lg font-semibold text-synoria-ink">Réglages avancés</h3>
-                        <p class="text-sm text-synoria-ink-soft mt-1">Ajuste chaque critère de 0 à 4.</p>
+                        <h3 class="text-lg font-semibold text-synoria-ink dark:text-white">{{ __('Réglages avancés') }}</h3>
+                        <p class="text-sm text-synoria-ink-soft mt-1">{{ __('Ajuste chaque critère de 0 à 4.') }}</p>
                     </div>
 
                     @php
                         $sliders = [
-                            'distance' => ['label' => 'Distance', 'hint' => 'Plus c’est haut, plus on favorise les restos proches.'],
-                            'price' => ['label' => 'Prix des plats', 'hint' => 'Priorise les menus abordables.'],
-                            'fee' => ['label' => 'Frais de livraison', 'hint' => 'Favorise les livraisons moins chères.'],
-                            'courier' => ['label' => 'Livreurs disponibles', 'hint' => 'Privilégie les zones avec livreurs actifs.'],
-                            'rating' => ['label' => 'Note client', 'hint' => 'Met en avant les restaurants les mieux notés.'],
+                            'distance' => ['label' => __('Distance'), 'hint' => __('Plus c’est haut, plus on favorise les restos proches.')],
+                            'price' => ['label' => __('Prix des plats'), 'hint' => __('Priorise les menus abordables.')],
+                            'fee' => ['label' => __('Frais de livraison'), 'hint' => __('Favorise les livraisons moins chères.')],
+                            'courier' => ['label' => __('Livreurs disponibles'), 'hint' => __('Privilégie les zones avec livreurs actifs.')],
+                            'rating' => ['label' => __('Note client'), 'hint' => __('Met en avant les restaurants les mieux notés.')],
                         ];
                     @endphp
 
@@ -75,9 +75,9 @@
                 </section>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <x-primary-button>Appliquer mes préférences</x-primary-button>
+                    <x-primary-button>{{ __('Appliquer') }}</x-primary-button>
                     <a href="{{ route('restaurants.index') }}" class="text-sm font-medium text-synoria-ink-soft hover:text-synoria-ink">
-                        Annuler
+                        {{ __('Annuler') }}
                     </a>
                 </div>
             </form>
@@ -87,7 +87,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700">
-                        Revenir à la sélection automatique
+                        {{ __('Revenir à la sélection automatique') }}
                     </button>
                 </form>
             @endif

@@ -60,9 +60,15 @@ return [
         'max_distance_km' => (float) env('SYNORIA_MATCH_MAX_DISTANCE_KM', 12),
     ],
 
+    'contact' => [
+        'phone' => env('SYNORIA_CONTACT_PHONE', '695366999'),
+        'phone_display' => env('SYNORIA_CONTACT_PHONE_DISPLAY', '+237 6 95 36 69 99'),
+        'email' => env('SYNORIA_CONTACT_EMAIL', 'contact@synoriaeats.com'),
+    ],
+
     'companion' => [
         'enabled' => (bool) env('SYNORIA_COMPANION_ENABLED', true),
-        'name' => env('SYNORIA_AI_NAME', 'Amina'),
+        'name' => env('SYNORIA_AI_NAME', 'Sara'),
         // local (gratuit, défaut) | openai | anthropic
         'provider' => env('SYNORIA_AI_PROVIDER', 'local'),
         'api_key' => env('OPENAI_API_KEY'),

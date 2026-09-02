@@ -46,7 +46,9 @@ class RestaurantController extends Controller
                         ->orWhere('category', 'like', $term)
                         ->orWhere('description', 'like', $term);
                 });
-            });
+            })
+            ->when($request->filled('min_rating'), fn ($q) => $q->where('rating', '>=', (float) $request->input('min_rating')))
+            ->when($request->filled('max_fee'), fn ($q) => $q->where('delivery_fee', '<=', (int) $request->input('max_fee')));
 
         if ($hasLocation) {
             $ranked = $matcher->rank($query->get(), $lat, $lng, $matchWeights);
@@ -123,7 +125,7 @@ class RestaurantController extends Controller
 
         return redirect()
             ->route('restaurants.index')
-            ->with('status', 'Tes préférences ont été prises en compte.');
+            ->with('status', __('Tes préférences ont été prises en compte.'));
     }
 
     public function resetPreferences(Request $request): RedirectResponse
@@ -132,7 +134,7 @@ class RestaurantController extends Controller
 
         return redirect()
             ->route('restaurants.index')
-            ->with('status', 'Retour à la sélection automatique.');
+            ->with('status', __('Retour à la sélection automatique.'));
     }
 
     public function show(Restaurant $restaurant): View

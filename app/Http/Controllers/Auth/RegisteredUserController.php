@@ -54,7 +54,7 @@ class RegisteredUserController extends Controller
             $rules = array_merge($rules, [
                 'restaurant_name' => ['required', 'string', 'max:150'],
                 'restaurant_address' => ['required', 'string', 'max:255'],
-                'commerce_register' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+                'commerce_register' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
                 'identity' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
                 'proof_of_address' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             ]);
@@ -89,8 +89,11 @@ class RegisteredUserController extends Controller
                 'status' => ApprovalStatus::Pending,
             ]);
 
-            $this->storeDocument($media, $restaurant, DocumentType::CommerceRegister, $request->file('commerce_register'));
             $this->storeDocument($media, $restaurant, DocumentType::Identity, $request->file('identity'));
+
+            if ($request->hasFile('commerce_register')) {
+                $this->storeDocument($media, $restaurant, DocumentType::CommerceRegister, $request->file('commerce_register'));
+            }
 
             if ($request->hasFile('proof_of_address')) {
                 $this->storeDocument($media, $restaurant, DocumentType::ProofOfAddress, $request->file('proof_of_address'));
@@ -100,7 +103,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('verification.notice');
     }
 
     private function storeDocument(CloudinaryUploader $media, Restaurant $restaurant, DocumentType $type, $file): void

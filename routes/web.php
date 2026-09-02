@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Admin\CommissionController as AdminCommissionController;
 use App\Http\Controllers\Admin\CourierController as AdminCourierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -19,11 +20,23 @@ use App\Http\Controllers\Owner\RestaurantController as OwnerRestaurantController
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\ReviewController;
+use App\Models\Restaurant;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/locale/{locale}', LocaleController::class)->name('locale.switch');
+
 Route::get('/', function () {
-    return view('welcome');
+    $featured = Restaurant::query()
+        ->where('is_open', true)
+        ->where('is_validated', true)
+        ->whereHas('menuItems', fn ($q) => $q->where('is_available', true))
+        ->with(['menuItems' => fn ($q) => $q->where('is_available', true)->limit(1)])
+        ->latest()
+        ->limit(6)
+        ->get();
+
+    return view('welcome', compact('featured'));
 })->name('home');
 
 Route::get('/restaurants', [RestaurantController::class, 'index'])->name('restaurants.index');
@@ -68,6 +81,12 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
         Route::patch('/cart/line/{lineKey}', [CartController::class, 'update'])->name('cart.update');
@@ -81,10 +100,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/{order}/tracking', [OrderController::class, 'tracking'])->name('orders.tracking');
     Route::post('/orders/{order}/location', [OrderController::class, 'location'])->name('orders.location');
     Route::post('/orders/{order}/reviews', [ReviewController::class, 'store'])->name('orders.reviews.store');
-
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/notifications/poll', [\App\Http\Controllers\LiveNotificationController::class, 'poll'])
         ->name('notifications.poll');

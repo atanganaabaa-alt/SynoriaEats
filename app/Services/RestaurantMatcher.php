@@ -243,28 +243,32 @@ class RestaurantMatcher
         $highlights = [];
 
         if ($row['distance_km'] !== null) {
-            $highlights[] = 'À '.number_format($row['distance_km'], 1, ',', ' ').' km';
+            $highlights[] = __('À :km km', ['km' => number_format($row['distance_km'], 1, ',', ' ')]);
         }
 
-        $highlights[] = 'Livraison ~'.number_format($row['estimated_fee'], 0, ',', ' ').' FCFA';
+        $highlights[] = __('Livraison ~:amount FCFA', ['amount' => number_format($row['estimated_fee'], 0, ',', ' ')]);
 
         if ($row['avg_dish_price'] > 0) {
-            $highlights[] = 'Plats ~'.number_format($row['avg_dish_price'], 0, ',', ' ').' FCFA';
+            $highlights[] = __('Plats ~:amount FCFA', ['amount' => number_format($row['avg_dish_price'], 0, ',', ' ')]);
         }
 
         if ($row['nearby_couriers'] > 0) {
-            $highlights[] = $row['nearby_couriers'].' livreur'.($row['nearby_couriers'] > 1 ? 's' : '').' proche'.($row['nearby_couriers'] > 1 ? 's' : '');
+            $highlights[] = trans_choice(
+                ':count livreur proche|:count livreurs proches',
+                $row['nearby_couriers'],
+                ['count' => $row['nearby_couriers']]
+            );
         }
 
         arsort($dimensionScores);
         $topKey = array_key_first($dimensionScores);
 
         $strengthLabels = [
-            'distance' => 'Très proche de toi',
-            'price' => 'Prix attractifs',
-            'fee' => 'Frais de livraison bas',
-            'courier' => 'Bonne dispo livreurs',
-            'rating' => 'Très bien noté',
+            'distance' => __('Très proche de toi'),
+            'price' => __('Prix attractifs'),
+            'fee' => __('Frais de livraison bas'),
+            'courier' => __('Bonne dispo livreurs'),
+            'rating' => __('Très bien noté'),
         ];
 
         if ($topKey && ($dimensionScores[$topKey] ?? 0) >= 75 && isset($strengthLabels[$topKey])) {
@@ -295,16 +299,16 @@ class RestaurantMatcher
             $badges = [];
 
             if ($bestMatch && $restaurant->is($bestMatch)) {
-                $badges[] = 'Meilleure suggestion';
+                $badges[] = __('Meilleure suggestion');
             }
             if ($closest && $restaurant->is($closest)) {
-                $badges[] = 'Le plus proche';
+                $badges[] = __('Le plus proche');
             }
             if ($cheapestFee && $restaurant->is($cheapestFee)) {
-                $badges[] = 'Frais les plus bas';
+                $badges[] = __('Frais les plus bas');
             }
             if ($bestRated && $restaurant->is($bestRated) && (float) $restaurant->rating >= 4) {
-                $badges[] = 'Top note';
+                $badges[] = __('Top note');
             }
 
             $restaurant->setAttribute('match_badges', array_values(array_unique($badges)));

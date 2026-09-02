@@ -11,6 +11,7 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700&display=swap" rel="stylesheet" />
 
+        <x-theme-init />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
     </head>
@@ -19,16 +20,18 @@
             @include('layouts.navigation')
 
             @isset($header)
-                <header class="bg-white/70 backdrop-blur-sm border-b border-synoria-yellow/25">
+                <header class="bg-white/70 backdrop-blur-sm border-b border-synoria-yellow/25 dark:bg-slate-900/80 dark:border-slate-700">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
             @endisset
 
-            <main>
+            <main class="flex-1">
                 {{ $slot }}
             </main>
+
+            <x-site-footer />
 
             @auth
                 <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 max-w-[calc(100vw-2rem)]" aria-live="polite">

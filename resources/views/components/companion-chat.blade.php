@@ -9,7 +9,7 @@
     $endpoint = route('companion.message');
     $historyUrl = route('companion.history');
     $resetUrl = route('companion.reset');
-    $agentName = config('synoria.companion.name', 'Amina');
+    $agentName = config('synoria.companion.name', 'Sara');
 @endphp
 
 <div
@@ -47,61 +47,49 @@
         x-show="open"
         x-cloak
         @if (! $embedded) x-transition @endif
-        class="flex h-[22rem] max-h-[55vh] w-full flex-col overflow-hidden rounded-2xl border border-synoria-yellow/40 bg-white shadow-2xl"
+        class="flex h-[20rem] max-h-[55vh] w-full flex-col overflow-hidden rounded-2xl border border-synoria-yellow/40 bg-white shadow-2xl"
     >
         <div class="flex shrink-0 items-center justify-between gap-3 bg-synoria-ink px-3 py-2.5 text-white">
             <div class="min-w-0">
                 <p class="truncate text-sm font-semibold text-synoria-yellow" x-text="agentName"></p>
-                <p class="text-[11px] text-white/70">Conseillère · SynoriaEats</p>
+                <p class="text-[11px] text-white/70">{{ __('Conseillère · SynoriaEats') }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
-                <button type="button" class="text-xs text-white/70 hover:text-white" @click="resetChat()">Effacer</button>
+                <button type="button" class="text-xs text-white/70 hover:text-white" @click="resetChat()">{{ __('Effacer') }}</button>
                 @unless ($embedded)
-                    <button type="button" class="text-white/80 hover:text-white" @click="open = false" aria-label="Fermer">✕</button>
+                    <button type="button" class="text-white/80 hover:text-white" @click="open = false" aria-label="{{ __('Fermer') }}">✕</button>
                 @endunless
             </div>
         </div>
 
         <div
             class="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-synoria-yellow-mist/30 px-3 py-2.5"
-            style="max-height: 12rem;"
             x-ref="scroller"
         >
             <div class="space-y-2.5">
                 <template x-if="messages.length === 0 && !loadingHistory">
-                    <p class="text-sm text-synoria-ink-soft" x-text="greeting"></p>
+                    <p class="text-sm text-synoria-ink-soft whitespace-pre-line" x-text="greeting"></p>
                 </template>
                 <template x-for="(msg, index) in messages" :key="index">
                     <div :class="msg.role === 'user' ? 'text-right' : 'text-left'">
                         <div
-                            class="inline-block max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm leading-snug"
+                            class="inline-block max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm leading-snug text-left"
                             :class="msg.role === 'user'
                                 ? 'bg-synoria-green text-white rounded-br-md'
                                 : 'bg-white text-synoria-ink border border-synoria-yellow/30 rounded-bl-md'"
-                            x-text="msg.content"
+                            x-html="formatMessage(msg.content)"
                         ></div>
                     </div>
                 </template>
-                <p x-show="loading || loadingHistory" class="text-xs text-synoria-ink-faint" x-text="loadingHistory ? 'Je retrouve nos échanges…' : (agentName + ' réfléchit…')"></p>
+                <p x-show="loading || loadingHistory" class="text-xs text-synoria-ink-faint" x-text="loadingHistory ? '{{ __('Je retrouve nos échanges…') }}' : (agentName + ' {{ __('réfléchit…') }}')"></p>
             </div>
-        </div>
-
-        <div class="flex shrink-0 flex-wrap gap-1.5 border-t border-synoria-yellow/20 px-3 py-1.5 max-h-14 overflow-y-auto" x-show="suggestions.length">
-            <template x-for="chip in suggestions" :key="chip">
-                <button
-                    type="button"
-                    class="rounded-full bg-synoria-yellow/20 px-2 py-0.5 text-[11px] font-medium text-synoria-ink hover:bg-synoria-yellow/35"
-                    @click="send(chip)"
-                    x-text="chip"
-                ></button>
-            </template>
         </div>
 
         <form class="flex shrink-0 gap-2 border-t border-synoria-yellow/25 p-2.5" @submit.prevent="send()">
             <input
                 type="text"
                 x-model="draft"
-                placeholder="Écris ici…"
+                placeholder="{{ __('Écris ici…') }}"
                 class="w-full rounded-xl border-gray-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                 :disabled="loading"
             >
@@ -110,7 +98,7 @@
                 class="shrink-0 rounded-xl bg-synoria-yellow px-3 py-2 text-sm font-semibold text-synoria-ink hover:bg-synoria-yellow-deep disabled:opacity-60"
                 :disabled="loading || !draft.trim()"
             >
-                Envoyer
+                {{ __('Envoyer') }}
             </button>
         </form>
     </div>
@@ -127,11 +115,12 @@
                     loadingHistory: false,
                     draft: '',
                     messages: [],
-                    agentName: config.agentName || 'Amina',
+                    agentName: config.agentName || 'Sara',
                     greeting: '',
-                    suggestions: ['J’ai faim, guide-moi', 'J’ai environ 5000 FCFA', 'Quelque chose de local'],
                     async boot() {
-                        this.greeting = 'Salut ! Moi c’est ' + this.agentName + '. Budget ou envie, on trouve ensemble.';
+                        this.greeting =
+                            'Salut ! Je suis ' + this.agentName + ', ta conseillère SynoriaEats.\n' +
+                            'Je t’aide à choisir un resto ou un plat selon ton budget, tes envies et ce qui est ouvert près de toi. Écris-moi ce que tu cherches.';
                         await this.loadHistory();
                     },
                     async loadHistory() {
@@ -152,9 +141,6 @@
                             const data = await res.json();
                             if (data.agent) this.agentName = data.agent;
                             if (Array.isArray(data.history)) this.messages = data.history;
-                            if (Array.isArray(data.suggestions) && data.suggestions.length) {
-                                this.suggestions = data.suggestions;
-                            }
                             this.$nextTick(() => this.scroll());
                         } catch (e) {
                         } finally {
@@ -187,13 +173,10 @@
                             if (!res.ok) throw new Error(data.message || 'Erreur agent');
                             if (data.agent) this.agentName = data.agent;
                             this.messages.push({ role: 'assistant', content: data.reply });
-                            if (Array.isArray(data.suggestions) && data.suggestions.length) {
-                                this.suggestions = data.suggestions;
-                            }
                         } catch (e) {
                             this.messages.push({
                                 role: 'assistant',
-                                content: 'Désolée, j’ai eu un blanc. Réessaie juste après. Je reste avec toi.',
+                                content: 'Désolée, j’ai eu un blanc. Réessaie juste après.',
                             });
                         } finally {
                             this.loading = false;
@@ -217,6 +200,17 @@
                     scroll() {
                         const el = this.$refs.scroller;
                         if (el) el.scrollTop = el.scrollHeight;
+                    },
+                    formatMessage(text) {
+                        const escaped = String(text || '')
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                        return escaped
+                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                            .replace(/^[\-\u2022]\s+(.+)$/gm, '• $1')
+                            .replace(/\n/g, '<br>');
                     },
                 };
             }

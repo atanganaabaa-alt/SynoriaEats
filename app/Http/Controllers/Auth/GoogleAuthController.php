@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
@@ -20,7 +21,7 @@ class GoogleAuthController extends Controller
             return redirect()
                 ->route('login')
                 ->withErrors([
-                    'email' => 'Google n’est pas encore configuré. Ajoute GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans ton .env, ou connecte-toi avec email / mot de passe.',
+                    'email' => __('Google n’est pas encore configuré. Dans Google Cloud Console, crée un ID client OAuth (Application Web), puis lance : php artisan synoria:google "TON_VRAI_CLIENT_ID" "TON_VRAI_SECRET"'),
                 ]);
         }
 
@@ -130,15 +131,29 @@ class GoogleAuthController extends Controller
 
     private function googleIsConfigured(): bool
     {
-        $clientId = (string) config('services.google.client_id');
-        $clientSecret = (string) config('services.google.client_secret');
+        $clientId = trim((string) config('services.google.client_id'));
+        $clientSecret = trim((string) config('services.google.client_secret'));
 
-        if (blank($clientId) || blank($clientSecret)) {
+        if ($clientId === '' || $clientSecret === '') {
             return false;
         }
 
-        return ! str_starts_with($clientId, 'COLLER')
-            && ! str_contains($clientId, 'YOUR_')
-            && ! str_starts_with($clientSecret, 'COLLER');
+        $upperId = Str::upper($clientId);
+        $upperSecret = Str::upper($clientSecret);
+
+        $placeholders = [
+            'COLLER', 'YOUR_', 'TON_CLIENT', 'TON_SECRET', 'TON_VRAI',
+            'CHANGE_ME', 'PLACEHOLDER', 'XXXXX', 'EXAMPLE',
+        ];
+
+        foreach ($placeholders as $needle) {
+            if (str_contains($upperId, $needle) || str_contains($upperSecret, $needle)) {
+                return false;
+            }
+        }
+
+        // Un vrai Client ID Google ressemble à : 123-abc.apps.googleusercontent.com
+        return (bool) preg_match('/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/i', $clientId)
+            && strlen($clientSecret) >= 20;
     }
 }

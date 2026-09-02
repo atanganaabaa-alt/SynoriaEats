@@ -7,7 +7,7 @@
         <div class="max-w-xl mx-auto sm:px-6 lg:px-8">
             <form method="POST" action="{{ route('owner.onboarding.store') }}" enctype="multipart/form-data" class="bg-white shadow-sm sm:rounded-lg p-6 space-y-4">
                 @csrf
-                <p class="text-sm text-gray-600">Envoie le registre de commerce et une pièce d’identité. Les fichiers partent vers Cloudinary : seule l’URL est enregistrée.</p>
+                <p class="text-sm text-gray-600">Envoie au minimum une pièce d’identité. Le RCCM est optionnel si tu n’en as pas encore.</p>
 
                 <div>
                     <x-input-label for="restaurant_name" value="Nom du restaurant" />
@@ -27,8 +27,8 @@
                     </div>
                 </div>
                 <div>
-                    <x-input-label for="commerce_register" value="Registre de commerce / RCCM" />
-                    <input id="commerce_register" name="commerce_register" type="file" required accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm">
+                    <x-input-label for="commerce_register" value="Registre de commerce / RCCM (optionnel)" />
+                    <input id="commerce_register" name="commerce_register" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full text-sm">
                     <x-input-error :messages="$errors->get('commerce_register')" class="mt-2" />
                 </div>
                 <div>

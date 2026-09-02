@@ -45,14 +45,14 @@
                     @if ($order->status === \App\Enums\OrderStatus::Ready)
                         <form method="POST" action="{{ route('courier.missions.pickup', $order) }}">
                             @csrf
-                            <x-primary-button>J’ai récupéré la commande: démarrer la livraison</x-primary-button>
+                            <x-primary-button class="whitespace-nowrap">Récupérer</x-primary-button>
                         </form>
                     @endif
 
                     @if ($order->status === \App\Enums\OrderStatus::OutForDelivery)
                         <form method="POST" action="{{ route('courier.missions.deliver', $order) }}">
                             @csrf
-                            <x-primary-button>Marquer comme livrée</x-primary-button>
+                            <x-primary-button class="whitespace-nowrap">Livrée</x-primary-button>
                         </form>
                     @endif
                 @elseif ($order->status === \App\Enums\OrderStatus::Ready && $order->courier_id === null)

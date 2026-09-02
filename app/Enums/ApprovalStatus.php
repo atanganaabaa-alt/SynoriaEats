@@ -11,9 +11,9 @@ enum ApprovalStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'En attente',
-            self::Approved => 'Approuvé',
-            self::Rejected => 'Rejeté',
+            self::Pending => __('En attente'),
+            self::Approved => __('Approuvé'),
+            self::Rejected => __('Rejeté'),
         };
     }
 }

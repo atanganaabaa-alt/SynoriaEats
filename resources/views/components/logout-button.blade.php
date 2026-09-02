@@ -7,6 +7,6 @@
     @csrf
     <input type="hidden" name="redirect" value="{{ $redirect }}">
     <button type="submit" class="{{ $class }}">
-        {{ $slot->isEmpty() ? 'Déconnexion' : $slot }}
+        {{ $slot->isEmpty() ? __('Déconnexion') : $slot }}
     </button>
 </form>

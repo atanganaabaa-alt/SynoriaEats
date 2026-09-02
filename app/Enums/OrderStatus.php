@@ -15,13 +15,13 @@ enum OrderStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'En attente',
-            self::Accepted => 'Acceptée',
-            self::Preparing => 'En préparation',
-            self::Ready => 'Prête',
-            self::OutForDelivery => 'En livraison',
-            self::Delivered => 'Livrée',
-            self::Cancelled => 'Annulée',
+            self::Pending => __('En attente'),
+            self::Accepted => __('Acceptée'),
+            self::Preparing => __('En préparation'),
+            self::Ready => __('Prête'),
+            self::OutForDelivery => __('En livraison'),
+            self::Delivered => __('Livrée'),
+            self::Cancelled => __('Annulée'),
         };
     }
 }

@@ -13,17 +13,71 @@
 }
 
 @layer base {
+    html {
+        @apply scroll-smooth;
+    }
+
     body {
-        color: var(--synoria-ink);
-        background-color: #fffdf3;
+        @apply text-synoria-ink bg-[#fffdf3];
+    }
+
+    html.dark body {
+        color: #f3f4f6;
+        background-color: #0f1419;
+    }
+
+    html.dark .bg-white {
+        background-color: #0f172a !important;
+        color: #f3f4f6;
+    }
+
+    html.dark .bg-white\/90,
+    html.dark .bg-white\/70,
+    html.dark .bg-white\/95 {
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        color: #f3f4f6;
+    }
+
+    html.dark .text-gray-800,
+    html.dark .text-gray-900 {
+        color: #f3f4f6 !important;
+    }
+
+    html.dark .text-gray-500,
+    html.dark .text-gray-600,
+    html.dark .text-gray-700 {
+        color: #9ca3af !important;
+    }
+
+    html.dark .border-gray-100,
+    html.dark .border-gray-200 {
+        border-color: #334155 !important;
+    }
+
+    html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+        border-color: #334155;
+    }
+
+    html.dark input,
+    html.dark select,
+    html.dark textarea {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f3f4f6;
     }
 }
 
 @layer components {
     .synoria-shell {
-        @apply min-h-screen relative text-synoria-ink;
+        @apply min-h-screen relative flex flex-col text-synoria-ink;
         background-image: theme('backgroundImage.synoria-glow');
         background-attachment: fixed;
+    }
+
+    html.dark .synoria-shell {
+        color: #f3f4f6;
+        background-color: #0f1419;
+        background-image: none;
     }
 
     .synoria-shell::before {
@@ -38,7 +92,13 @@
         background-size: 380px 380px;
     }
 
-    .synoria-shell > * {
+    html.dark .synoria-shell::before {
+        opacity: 0.02;
+    }
+
+    .synoria-shell > main,
+    .synoria-shell > header,
+    .synoria-shell > nav {
         position: relative;
         z-index: 1;
     }
@@ -47,14 +107,40 @@
         @apply bg-white/90 backdrop-blur-sm border border-synoria-yellow/40 shadow-sm;
     }
 
+    html.dark .synoria-panel {
+        background-color: rgba(15, 23, 42, 0.92);
+        border-color: #334155;
+        color: #f3f4f6;
+    }
+
     .synoria-nav {
-        /* Fond opaque : évite que le menu Compte (Profil / Déconnexion) soit flou */
         @apply relative z-[100] border-b border-synoria-yellow/50 bg-white;
+    }
+
+    html.dark .synoria-nav {
+        background-color: #0f172a;
+        border-color: #334155;
+    }
+
+    html.dark .text-synoria-ink {
+        color: #f3f4f6 !important;
+    }
+
+    html.dark .text-synoria-ink-soft {
+        color: #9ca3af !important;
+    }
+
+    html.dark .text-synoria-ink-faint {
+        color: #6b7280 !important;
     }
 
     .synoria-hero-glow {
         background:
             radial-gradient(circle at 30% 20%, rgba(252, 213, 48, 0.55), transparent 45%),
             radial-gradient(circle at 80% 70%, rgba(99, 160, 58, 0.18), transparent 40%);
+    }
+
+    html.dark .synoria-hero-glow {
+        opacity: 0.3;
     }
 }

@@ -56,7 +56,14 @@ class Sprint4AdminTest extends TestCase
             ->patch(route('admin.restaurants.update', $restaurant), ['is_validated' => '1'])
             ->assertRedirect();
 
-        $this->assertTrue($restaurant->fresh()->is_validated);
+        $restaurant->refresh();
+        $this->assertTrue($restaurant->is_validated);
+        $this->get(route('restaurants.index'))->assertOk()->assertDontSee($restaurant->name);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.restaurants.update', $restaurant), ['is_open' => '1'])
+            ->assertRedirect();
+
         $this->get(route('restaurants.index'))->assertOk()->assertSee($restaurant->name);
 
         $this->actingAs($admin)

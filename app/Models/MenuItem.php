@@ -64,4 +64,9 @@ class MenuItem extends Model
     {
         return \App\Support\MediaUrl::resolve($this->photo_url);
     }
+
+    public function photoThumbnailUrl(): ?string
+    {
+        return \App\Support\MediaUrl::thumbnail($this->photo_url, 320);
+    }
 }

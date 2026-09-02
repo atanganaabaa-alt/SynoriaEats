@@ -92,4 +92,14 @@ class Restaurant extends Model
     {
         return \App\Support\MediaUrl::resolve($this->cover_url);
     }
+
+    public function coverThumbnailUrl(): ?string
+    {
+        return \App\Support\MediaUrl::thumbnail($this->cover_url, 640);
+    }
+
+    public function logoThumbnailUrl(): ?string
+    {
+        return \App\Support\MediaUrl::thumbnail($this->logo_url, 128);
+    }
 }

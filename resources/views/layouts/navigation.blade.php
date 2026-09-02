@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="synoria-nav relative z-[100] border-b border-synoria-yellow/50 bg-white" style="backdrop-filter: none; -webkit-backdrop-filter: none; background-color: #ffffff;">
+<nav x-data="{ open: false }" class="synoria-nav relative z-[100] border-b border-synoria-yellow/50 bg-white dark:bg-slate-900 dark:border-slate-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
@@ -11,7 +11,7 @@
                         {{ __('Restaurants') }}
                     </x-nav-link>
                     <x-nav-link :href="route('companion.show')" :active="request()->routeIs('companion.*')">
-                        {{ __('Amina') }}
+                        {{ __('Sara') }}
                     </x-nav-link>
                     @auth
                         <x-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
@@ -53,7 +53,8 @@
                 </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 sm:gap-3">
+                <x-ui-preferences />
                 @auth
                     <x-dropdown align="right" width="56">
                         <x-slot name="trigger">
@@ -91,7 +92,7 @@
                                     redirect="login"
                                     class="w-full text-left text-sm font-medium text-synoria-ink hover:text-synoria-green"
                                 >
-                                    Changer de compte
+                                    {{ __('Changer de compte') }}
                                 </x-logout-button>
                             </div>
                             <div class="border-t border-synoria-yellow/20 px-4 py-2">
@@ -101,9 +102,9 @@
                     </x-dropdown>
                 @else
                     <div class="flex items-center gap-3">
-                        <a href="{{ route('login') }}" class="text-sm text-synoria-ink-soft hover:text-synoria-ink">Connexion</a>
+                        <a href="{{ route('login') }}" class="text-sm text-synoria-ink-soft hover:text-synoria-ink dark:text-gray-300 dark:hover:text-white">{{ __('Connexion') }}</a>
                         <a href="{{ route('register') }}" class="inline-flex items-center px-3 py-1.5 rounded-md bg-synoria-green text-white text-sm font-medium hover:bg-synoria-green-dark">
-                            Inscription
+                            {{ __('Inscription') }}
                         </a>
                     </div>
                 @endauth
@@ -120,13 +121,16 @@
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white/95">
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white/95 dark:bg-slate-900/95 border-t border-synoria-yellow/30 dark:border-slate-700">
+        <div class="px-4 py-3 border-b border-synoria-yellow/20 dark:border-slate-700">
+            <x-ui-preferences />
+        </div>
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('restaurants.index')" :active="request()->routeIs('restaurants.*')">
                 {{ __('Restaurants') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('companion.show')" :active="request()->routeIs('companion.*')">
-                {{ __('Amina') }}
+                {{ __('Sara') }}
             </x-responsive-nav-link>
             @auth
                 <x-responsive-nav-link :href="route('cart.show')" :active="request()->routeIs('cart.*')">
@@ -174,8 +178,8 @@
                 <div class="mt-3 space-y-1 px-4 pb-3">
                     <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profil') }}</x-responsive-nav-link>
                     <div class="pt-2">
-                        <x-logout-button redirect="login" class="text-sm font-medium text-synoria-ink hover:text-synoria-green">
-                            Changer de compte
+                        <x-logout-button redirect="login" class="text-sm font-medium text-synoria-ink hover:text-synoria-green dark:text-gray-300">
+                            {{ __('Changer de compte') }}
                         </x-logout-button>
                     </div>
                     <div class="pt-1">

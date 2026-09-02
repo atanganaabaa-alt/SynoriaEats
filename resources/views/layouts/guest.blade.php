@@ -11,10 +11,14 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=outfit:400,500,600,700&display=swap" rel="stylesheet" />
 
+        <x-theme-init />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-synoria-ink antialiased">
-        <div class="synoria-shell flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
+    <body class="font-sans text-synoria-ink antialiased dark:text-gray-100">
+        <div class="synoria-shell flex flex-col sm:justify-center items-center pt-6 sm:pt-0 min-h-screen">
+            <div class="absolute top-4 right-4 z-10">
+                <x-ui-preferences />
+            </div>
             <div class="px-4">
                 <x-brand size="lg" />
             </div>

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use App\Models\MenuItem;
@@ -28,7 +29,7 @@ class Sprint2OrderFlowTest extends TestCase
 
         $this->get(route('restaurants.index'))
             ->assertOk()
-            ->assertSee('Aucun restaurant avec menu disponible');
+            ->assertSee('Aucun restaurant disponible près de toi');
     }
 
     public function test_full_sprint2_flow_from_menu_to_order_history(): void
@@ -51,7 +52,11 @@ class Sprint2OrderFlowTest extends TestCase
             ->assertRedirect();
 
         $restaurant = Restaurant::query()->where('owner_id', $owner->id)->firstOrFail();
-        $restaurant->update(['is_validated' => true]);
+        $restaurant->update([
+            'is_validated' => true,
+            'status' => ApprovalStatus::Approved,
+            'is_open' => true,
+        ]);
 
         $this->actingAs($owner)
             ->post(route('owner.menu-items.store', $restaurant), [
@@ -87,7 +92,7 @@ class Sprint2OrderFlowTest extends TestCase
             ->assertRedirect();
 
         $order = Order::query()->where('customer_id', $customer->id)->firstOrFail();
-        $this->assertSame(7500, $order->total);
+        $this->assertSame(7800, $order->total);
 
         Log::shouldHaveReceived('info')->atLeast()->once();
 

@@ -97,10 +97,12 @@
                             <input type="checkbox" name="checks[]" value="docs_readable" class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" @checked(collect(old('checks', []))->contains('docs_readable'))>
                             <span>Les documents s’ouvrent et sont lisibles</span>
                         </label>
-                        <label class="flex items-start gap-2">
-                            <input type="checkbox" name="checks[]" value="commerce_ok" class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" @checked(collect(old('checks', []))->contains('commerce_ok'))>
-                            <span>Le registre de commerce / RCCM correspond au restaurant « {{ $restaurant->name }} »</span>
-                        </label>
+                        @if ($restaurant->documents->contains(fn ($d) => $d->type === \App\Enums\DocumentType::CommerceRegister))
+                            <label class="flex items-start gap-2">
+                                <input type="checkbox" name="checks[]" value="commerce_ok" class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" @checked(collect(old('checks', []))->contains('commerce_ok'))>
+                                <span>Le registre de commerce / RCCM correspond au restaurant « {{ $restaurant->name }} »</span>
+                            </label>
+                        @endif
                         <label class="flex items-start gap-2">
                             <input type="checkbox" name="checks[]" value="identity_ok" class="mt-1 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" @checked(collect(old('checks', []))->contains('identity_ok'))>
                             <span>La pièce d’identité correspond au propriétaire ({{ $restaurant->owner->name }})</span>
