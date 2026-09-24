@@ -66,8 +66,18 @@ class AminaLocalBrain
             return $this->maybeShorten($this->replyCart($context, $english), $short);
         }
 
+        // Méta : « écoute », « prends ma position », « ça prend en compte quoi ? »
+        if ($this->asksListeningOrCriteria($lower) || $this->asksUseMyPosition($lower)) {
+            return $this->replyAboutCriteria($context, $english, $lower);
+        }
+
         // Lieu / proximité (Ambam, restos proches…) — avant le fallback budget
         if ($this->asksNearby($lower) || $this->asksOpenRestaurants($lower) || isset($context['stated_place'])) {
+            // Si le message est juste une plainte sans demande de liste, explique d'abord
+            if ($this->asksListeningOrCriteria($lower)) {
+                return $this->replyAboutCriteria($context, $english, $lower);
+            }
+
             return $this->replyNearby(
                 $context,
                 $english,
@@ -140,15 +150,17 @@ class AminaLocalBrain
             );
         }
 
-        // Pose une question utile au lieu du même fallback
+        // Si on connaît déjà le lieu, ne pas rabâcher le budget
+        if (isset($context['stated_place'])) {
+            return $this->replyAboutCriteria($context, $english, $lower);
+        }
+
         return $this->pick($english, $turn, [
-            $short ? 'Budget (FCFA) or craving?' : 'I need one clue: budget in FCFA, or a craving (local, spicy, filling)?',
-            $short ? 'How much can you spend?' : 'Want me to pick from what’s open near you, or stay on one restaurant?',
-            'Say a max budget and I’ll filter the real menu.',
+            $short ? 'Where are you / budget / craving?' : 'Give me your area (Ambam, Bastos…), a budget, or a craving — I’ll use that, not only the menu.',
+            $short ? 'Location or craving?' : 'Where should I search from, or what do you feel like eating?',
         ], [
-            $short ? 'Budget (FCFA) ou envie ?' : 'Il me faut un indice : budget en FCFA, ou une envie (local, épicé, copieux) ?',
-            $short ? 'Tu peux mettre combien ?' : 'Je pioche parmi les restos ouverts, ou on reste sur un resto précis ?',
-            'Donne un budget max et je filtre le vrai menu.',
+            $short ? 'Lieu / budget / envie ?' : 'Dis-moi ton quartier (Ambam, Bastos…), un budget, ou une envie — je m’appuie là-dessus, pas seulement sur le menu.',
+            $short ? 'Où tu es, ou envie ?' : 'D’où je cherche, ou tu as envie de quoi ?',
         ]);
     }
 
@@ -367,6 +379,93 @@ class AminaLocalBrain
                 : "\n\nDonne un budget en FCFA si tu veux que je filtre les plats.");
 
         return $intro."\n\n".implode("\n\n", $lines).$outro;
+    }
+
+    private function asksListeningOrCriteria(string $lower): bool
+    {
+        return (bool) preg_match('/\b(écoute|ecoute|listen|comprend|comprends|ignore|ignor|putain|merde)\b/u', $lower)
+            || str_contains($lower, 'prends en compte')
+            || str_contains($lower, 'prend en compte')
+            || str_contains($lower, 'prendre en compte')
+            || str_contains($lower, 'c\'que tu propose')
+            || str_contains($lower, 'ce que tu propose')
+            || str_contains($lower, 'prend en compte quoi')
+            || str_contains($lower, 'prends en compte quoi')
+            || str_contains($lower, 'réponds moi')
+            || str_contains($lower, 'reponds moi')
+            || str_contains($lower, 'filtre seulement')
+            || str_contains($lower, 'seulement en fonction')
+            || str_contains($lower, 'pas que tu filtre')
+            || str_contains($lower, 'je veux pas que tu');
+    }
+
+    private function asksUseMyPosition(string $lower): bool
+    {
+        return str_contains($lower, 'ma position')
+            || str_contains($lower, 'my location')
+            || str_contains($lower, 'où je suis')
+            || str_contains($lower, 'ou je suis')
+            || str_contains($lower, 'je suis à')
+            || str_contains($lower, 'je suis a');
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    private function replyAboutCriteria(array $context, bool $english, string $lower): string
+    {
+        $place = $context['stated_place'] ?? null;
+        $catalog = $context['catalog'] ?? [];
+        $nearest = null;
+        $nearestKm = null;
+        foreach ($catalog as $resto) {
+            if (! isset($resto['distance_km'])) {
+                continue;
+            }
+            $km = (float) $resto['distance_km'];
+            if ($nearestKm === null || $km < $nearestKm) {
+                $nearestKm = $km;
+                $nearest = $resto;
+            }
+        }
+
+        if ($english) {
+            $lines = ['Got you. I’m listening.'];
+            if ($place) {
+                $lines[] = "I treat **{$place}** as your position.";
+            } else {
+                $lines[] = 'Tell me your city/neighborhood (Ambam, Bastos, Douala…) and I’ll lock it.';
+            }
+            $lines[] = 'My picks use: open restaurants on SynoriaEats, real menu dishes, then distance when I know where you are. Budget only if you give one.';
+            if ($place && $nearest && $nearestKm !== null) {
+                if ($nearestKm > 40) {
+                    $lines[] = "Honestly: nothing close to **{$place}** right now. Nearest listed is **{$nearest['name']}** (~{$nearestKm} km).";
+                } else {
+                    $lines[] = "Nearest open option from here: **{$nearest['name']}** (~{$nearestKm} km).";
+                }
+            }
+            $lines[] = 'What do you want next: closer spots only, a max budget, or a food craving?';
+
+            return implode(' ', $lines);
+        }
+
+        $lines = ['OK, j’écoute vraiment.'];
+        if ($place) {
+            $lines[] = "Je prends **{$place}** comme ta position.";
+        } else {
+            $lines[] = 'Dis-moi ton quartier / ta ville (Ambam, Bastos, Douala…) et je la verrouille.';
+        }
+        $lines[] = 'Ce que je prends en compte : restos ouverts sur SynoriaEats, plats réels du menu, puis la distance quand je connais ton lieu. Le budget seulement si tu en donnes un.';
+        if ($place && $nearest && $nearestKm !== null) {
+            if ($nearestKm > 40) {
+                $lines[] = "Honnêtement : rien de vraiment proche d’**{$place}** pour l’instant. Le plus proche listé, c’est **{$nearest['name']}** (~{$nearestKm} km).";
+            } else {
+                $lines[] = "Option la plus proche ouverte : **{$nearest['name']}** (~{$nearestKm} km).";
+            }
+        }
+        $lines[] = 'Tu veux la suite comment : seulement le plus proche, un budget max, ou une envie de plat ?';
+
+        return implode(' ', $lines);
     }
 
     private function asksNearby(string $lower): bool
