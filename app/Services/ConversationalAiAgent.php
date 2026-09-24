@@ -21,6 +21,7 @@ class ConversationalAiAgent
         private CartService $cart,
         private AminaLocalBrain $localBrain,
         private RestaurantMatcher $matcher,
+        private CameroonPlaceGeocoder $places,
     ) {}
 
     public function agentName(): string
@@ -93,7 +94,18 @@ class ConversationalAiAgent
     ): array {
         $message = trim($message);
         $learned = $this->learnFromUserMessage($user, $message);
+
+        // Lieu mentionné dans le message (ex. Ambam) → GPS pour classer les restos
+        $statedPlace = $this->places->resolve($message);
+        if ($statedPlace !== null && ($clientLocation['lat'] ?? null) === null) {
+            $clientLocation['lat'] = $statedPlace['lat'];
+            $clientLocation['lng'] = $statedPlace['lng'];
+        }
+
         $context = $this->buildContext($user, $restaurant, $matchPreferences, $clientLocation);
+        if ($statedPlace !== null) {
+            $context['stated_place'] = $statedPlace['label'];
+        }
         $suggestions = $this->quickSuggestions($context);
         $agent = $this->agentName();
 

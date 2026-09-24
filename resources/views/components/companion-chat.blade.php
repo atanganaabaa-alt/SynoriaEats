@@ -62,8 +62,9 @@
         @if (! $embedded) x-transition @endif
         @class([
             'flex overflow-hidden rounded-2xl border border-synoria-yellow/40 bg-white shadow-2xl dark:bg-slate-900 dark:border-slate-600',
-            'h-[22rem] max-h-[70vh] w-[min(100vw-2rem,22rem)] flex-col' => ! $embedded,
-            'h-[min(70vh,36rem)] w-full' => $embedded,
+            'h-[min(32rem,78vh)] w-[min(100vw-1.5rem,24rem)] flex-col' => ! $embedded,
+            'h-[min(70vh,36rem)] w-full flex-row' => $embedded && $threads,
+            'h-[min(70vh,36rem)] w-full flex-col' => $embedded && ! $threads,
         ])
     >
         @if ($threads)
@@ -107,7 +108,7 @@
             </aside>
         @endif
 
-        <div class="flex min-w-0 flex-1 flex-col">
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col">
             <div
                 class="flex shrink-0 cursor-grab items-center justify-between gap-3 bg-synoria-ink px-3 py-2.5 text-white active:cursor-grabbing dark:bg-slate-800"
                 @unless ($embedded)
@@ -177,7 +178,7 @@
                 </div>
             </div>
 
-            <form class="flex shrink-0 gap-2 border-t border-synoria-yellow/25 p-2.5 dark:border-slate-700" @submit.prevent="send()">
+            <form class="flex shrink-0 gap-2 border-t border-synoria-yellow/25 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900" @submit.prevent="send()">
                 <input
                     type="text"
                     x-model="draft"
@@ -377,6 +378,7 @@
                             if (data.conversation_id) this.conversationId = data.conversation_id;
                             if (Array.isArray(data.conversations)) this.conversations = data.conversations;
                             this.messages.push({ role: 'assistant', content: data.reply });
+                            this.$nextTick(() => this.scroll());
                         } catch (e) {
                             this.messages.push({
                                 role: 'assistant',
@@ -384,7 +386,12 @@
                             });
                         } finally {
                             this.loading = false;
-                            this.$nextTick(() => this.scroll());
+                            this.$nextTick(() => {
+                                this.scroll();
+                                // Remet le focus sur le champ (évite l’impression que Sara est « bloquée »)
+                                const input = this.$el.querySelector('input[type="text"]');
+                                if (input) input.focus();
+                            });
                         }
                     },
                     async resetChat() {

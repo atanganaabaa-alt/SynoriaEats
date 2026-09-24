@@ -66,8 +66,19 @@ class AminaLocalBrain
             return $this->maybeShorten($this->replyCart($context, $english), $short);
         }
 
-        if ($this->asksOpenRestaurants($lower)) {
-            return $this->replyCatalog($context, $english, $short, $spicy, $memory['local'], $memory['hearty'], $memory['budget'], $alreadySaid, $turn);
+        // Lieu / proximité (Ambam, restos proches…) — avant le fallback budget
+        if ($this->asksNearby($lower) || $this->asksOpenRestaurants($lower) || isset($context['stated_place'])) {
+            return $this->replyNearby(
+                $context,
+                $english,
+                $short,
+                $spicy,
+                $memory['local'],
+                $memory['hearty'],
+                $memory['budget'],
+                $alreadySaid,
+                $turn,
+            );
         }
 
         if ($this->asksBilingual($lower) && ! $this->asksLanguageSwitch($lower)) {
@@ -280,6 +291,91 @@ class AminaLocalBrain
         }
 
         return $this->replyCatalog($context, $english, $short, $wantsSpicy, $wantsLocal, $wantsHearty, $budget, $alreadySaid, $turn);
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     * @param  list<string>  $alreadySaid
+     */
+    private function replyNearby(
+        array $context,
+        bool $english,
+        bool $short,
+        bool $spicy,
+        bool $local,
+        bool $hearty,
+        ?int $budget,
+        array $alreadySaid,
+        int $turn,
+    ): string {
+        $place = $context['stated_place'] ?? null;
+        $catalog = $context['catalog'] ?? [];
+
+        if ($catalog === []) {
+            if ($place) {
+                return $english
+                    ? "I don’t have an open restaurant listed near **{$place}** right now. Try another area (Yaoundé, Douala…) or check back soon."
+                    : "Je n’ai pas encore de resto ouvert listé vers **{$place}**. Essaie une autre zone (Yaoundé, Douala…) ou reviens un peu plus tard.";
+            }
+
+            return $english
+                ? 'Nothing open with delivery right now.'
+                : 'Rien d’ouvert en livraison pour le moment.';
+        }
+
+        $hasNearby = collect($catalog)->contains(
+            fn ($r) => isset($r['distance_km']) && (float) $r['distance_km'] <= 25
+        );
+
+        if ($place && ! $hasNearby) {
+            $intro = $english
+                ? "You’re around **{$place}**. I don’t have a close open spot there yet — here are open restaurants on SynoriaEats (distances may be far):"
+                : "Tu es vers **{$place}**. Je n’ai pas encore de resto vraiment proche ouvert là-bas — voici ce qui est ouvert sur SynoriaEats (ça peut être loin) :";
+        } elseif ($place) {
+            $intro = $english
+                ? ($short ? "Near **{$place}**:" : "Got it — you’re around **{$place}**. Closest open picks:")
+                : ($short ? "Vers **{$place}** :" : "Compris, tu es vers **{$place}**. Voici ce qui est ouvert / proche :");
+        } else {
+            $intro = $english
+                ? ($short ? 'Nearby / open:' : 'Here are open restaurants near you:')
+                : ($short ? 'Proches / ouverts :' : 'Voici les restos ouverts près de toi :');
+        }
+
+        $limit = $short ? 3 : 5;
+        $lines = [];
+        foreach (array_slice($catalog, 0, $limit) as $resto) {
+            $samples = $resto['sample_dishes'] ?? [];
+            $fit = $this->pickDishes($samples, $budget, $local, $hearty, $spicy, $alreadySaid, [], $turn);
+            $dish = $fit[0] ?? ($samples[0] ?? null);
+            $dist = isset($resto['distance_km']) ? round((float) $resto['distance_km'], 1).' km' : null;
+            $fee = $this->money((int) ($resto['delivery_fee'] ?? 0));
+            $meta = $dist
+                ? ($english ? "{$dist} · delivery {$fee}" : "{$dist} · livraison {$fee}")
+                : ($english ? "delivery {$fee}" : "livraison {$fee}");
+
+            if ($dish) {
+                $lines[] = '- **'.$resto['name'].'** - '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*) · '.$meta;
+            } else {
+                $lines[] = '- **'.$resto['name'].'** · '.$meta;
+            }
+        }
+
+        $outro = $short
+            ? ''
+            : ($english
+                ? "\n\nGive a budget in FCFA if you want me to filter dishes."
+                : "\n\nDonne un budget en FCFA si tu veux que je filtre les plats.");
+
+        return $intro."\n\n".implode("\n\n", $lines).$outro;
+    }
+
+    private function asksNearby(string $lower): bool
+    {
+        return (bool) preg_match('/\b(proche|proches|près|pres|nearby|near me|autour|à côté|a cote|quartier|livrable|pas loin)\b/u', $lower)
+            || str_contains($lower, 'près de')
+            || str_contains($lower, 'pres de')
+            || str_contains($lower, 'restau')
+            || str_contains($lower, 'resto');
     }
 
     /**

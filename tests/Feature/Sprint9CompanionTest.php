@@ -174,6 +174,36 @@ class Sprint9CompanionTest extends TestCase
         $this->assertStringContainsString('En préparation', $reply);
     }
 
+    public function test_sara_answers_location_queries_like_ambam(): void
+    {
+        $customer = User::factory()->create();
+        $restaurant = Restaurant::factory()->create([
+            'name' => 'Grill Ambam Test',
+            'address' => 'Ambam centre',
+            'latitude' => 2.3833,
+            'longitude' => 11.2833,
+            'is_validated' => true,
+            'is_open' => true,
+        ]);
+        MenuItem::factory()->create([
+            'restaurant_id' => $restaurant->id,
+            'name' => 'Poisson braisé',
+            'category' => MenuCategory::Plats->value,
+            'price' => 3000,
+            'is_available' => true,
+        ]);
+
+        $reply = $this->actingAs($customer)
+            ->postJson(route('sara.message'), [
+                'message' => 'bahh je suis a ambam t’as des restau proches ?',
+            ])
+            ->assertOk()
+            ->json('reply');
+
+        $this->assertStringContainsString('Ambam', $reply);
+        $this->assertStringNotContainsString('Donne-moi un budget en FCFA ou une envie', $reply);
+    }
+
     public function test_conversations_are_listed_like_modern_ai_threads(): void
     {
         $customer = User::factory()->create();
