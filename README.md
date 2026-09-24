@@ -7,6 +7,7 @@ Livraison de repas — sœur de **Synoria**, suite type Google. Style Uber Eats 
 **Sprints 1 → 9 livrés** (auth, commande, livraison, admin, matching, carte live, audit, compagnon).
 
 Plan détaillé : [docs/SPRINTS.md](docs/SPRINTS.md)  
+**Présentation groupe (stack, pourquoi, oral) :** [docs/PRESENTATION_GROUPE.md](docs/PRESENTATION_GROUPE.md) · [docs/FICHE_ORALE.md](docs/FICHE_ORALE.md)  
 **Lancer en local (commandes) :** [docs/LOCAL.md](docs/LOCAL.md)
 
 ## Prérequis
