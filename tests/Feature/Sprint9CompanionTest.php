@@ -174,6 +174,43 @@ class Sprint9CompanionTest extends TestCase
         $this->assertStringContainsString('En préparation', $reply);
     }
 
+    public function test_agentrouter_provider_calls_chat_completions_with_claude_code_headers(): void
+    {
+        config([
+            'synoria.companion.enabled' => true,
+            'synoria.companion.provider' => 'agentrouter',
+            'synoria.companion.api_key' => 'sk-test-agentrouter-key',
+            'synoria.companion.base_url' => 'https://agentrouter.org/v1',
+            'synoria.companion.model' => 'deepseek-v4-flash',
+            'synoria.companion.anthropic_api_key' => null,
+        ]);
+
+        Http::fake([
+            'agentrouter.org/*' => Http::response([
+                'choices' => [[
+                    'message' => ['role' => 'assistant', 'content' => 'Salut, je suis Sara via AgentRouter.'],
+                ]],
+            ], 200),
+        ]);
+
+        $reply = $this->postJson(route('companion.message'), [
+            'message' => 'Salut Sara',
+        ])
+            ->assertOk()
+            ->assertJsonPath('mode', 'agentrouter')
+            ->assertJsonPath('engine', 'AgentRouter')
+            ->json('reply');
+
+        $this->assertStringContainsString('AgentRouter', $reply);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'agentrouter.org/v1/chat/completions')
+                && $request->hasHeader('User-Agent', 'claude-cli/1.0.108 (external, cli)')
+                && $request->hasHeader('x-app', 'cli')
+                && $request['model'] === 'deepseek-v4-flash';
+        });
+    }
+
     public function test_sara_answers_location_queries_like_ambam(): void
     {
         $customer = User::factory()->create();
