@@ -74,6 +74,7 @@ class RegisteredUserController extends Controller
             'password' => $validated['password'],
             'role' => UserRole::from($validated['role']),
             'is_active' => true,
+            'email_verified_at' => now(), // vérif email désactivée (SMTP) — à réactiver plus tard
             'approval_status' => $isOwner ? ApprovalStatus::Pending : ApprovalStatus::Approved,
             'approved_at' => $isOwner ? null : now(),
         ]);
@@ -103,7 +104,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        return redirect()->route('verification.notice');
+        return redirect()->route('dashboard');
     }
 
     private function storeDocument(CloudinaryUploader $media, Restaurant $restaurant, DocumentType $type, $file): void

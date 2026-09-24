@@ -52,11 +52,10 @@ class Sprint5AuthApprovalTest extends TestCase
             'restaurant_address' => 'Bastos, Yaoundé',
             'commerce_register' => UploadedFile::fake()->image('rccm.jpg'),
             'identity' => UploadedFile::fake()->image('cni.jpg'),
-        ])->assertRedirect(route('verification.notice'));
+        ])->assertRedirect(route('dashboard'));
 
         $owner = User::query()->where('email', 'amina@example.com')->first();
         $this->assertNotNull($owner);
-        $owner->markEmailAsVerified();
         $this->assertSame(ApprovalStatus::Pending, $owner->approval_status);
 
         $restaurant = Restaurant::query()->where('name', 'Chez Amina')->first();
@@ -214,7 +213,7 @@ class Sprint5AuthApprovalTest extends TestCase
             'restaurant_name' => 'Chez Marie',
             'restaurant_address' => 'Odza, Yaoundé',
             'identity' => UploadedFile::fake()->image('cni.jpg'),
-        ])->assertRedirect(route('verification.notice'));
+        ])->assertRedirect(route('dashboard'));
 
         $restaurant = Restaurant::query()->where('name', 'Chez Marie')->first();
         $this->assertNotNull($restaurant);

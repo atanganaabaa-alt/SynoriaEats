@@ -78,7 +78,7 @@ Route::get('/dashboard', function () {
         UserRole::Admin => redirect()->route('admin.dashboard'),
         default => redirect()->route('restaurants.index'),
     };
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
         Route::patch('/cart/line/{lineKey}', [CartController::class, 'update'])->name('cart.update');
