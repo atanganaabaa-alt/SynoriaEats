@@ -8,22 +8,24 @@
 
 @php
     $restaurantId = $restaurant?->id;
-    $endpoint = route('sara.message');
-    $historyUrl = route('sara.history');
-    $resetUrl = route('sara.reset');
-    $conversationsUrl = route('sara.conversations');
-    $storeConversationUrl = route('sara.conversations.store');
+    $endpoint = route('companion.message');
+    $askUrl = route('companion.ask');
+    $historyUrl = route('companion.history');
+    $resetUrl = route('companion.reset');
+    $conversationsUrl = route('companion.conversations');
+    $storeConversationUrl = route('companion.conversations.store');
     $agentName = config('synoria.companion.name', 'Sara');
 @endphp
 
 <div
     x-data="companionChat({
         endpoint: @js($endpoint),
+        askUrl: @js($askUrl),
         historyUrl: @js($historyUrl),
         resetUrl: @js($resetUrl),
         conversationsUrl: @js($conversationsUrl),
         storeConversationUrl: @js($storeConversationUrl),
-        destroyConversationUrlBase: @js(url('/api/sara/conversations')),
+        destroyConversationUrlBase: @js(url('/companion/conversations')),
         restaurantId: @js($restaurantId),
         csrf: @js(csrf_token()),
         open: @js($open || $embedded),
@@ -356,29 +358,7 @@
                         this.loading = true;
                         this.$nextTick(() => this.scroll());
                         try {
-                            const res = await fetch(config.endpoint, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': config.csrf,
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                },
-                                credentials: 'same-origin',
-                                body: JSON.stringify({
-                                    message: text,
-                                    restaurant_id: config.restaurantId,
-                                    conversation_id: this.conversationId,
-                                }),
-                            });
-                            const raw = await res.text();
-                            let data = null;
-                            try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = null; }
-                            if (!data || typeof data.reply !== 'string') {
-                                throw new Error(res.status === 419
-                                    ? 'Session expirée — recharge la page.'
-                                    : ('Erreur serveur (' + res.status + '). Vérifie migrate / clé AI sur o2switch.'));
-                            }
+                            const data = await this.callAgent(text);
                             if (data.agent) this.agentName = data.agent;
                             if (data.engine) this.engine = data.engine;
                             if (data.conversation_id) this.conversationId = data.conversation_id;
@@ -394,11 +374,64 @@
                             this.loading = false;
                             this.$nextTick(() => {
                                 this.scroll();
-                                // Remet le focus sur le champ (évite l’impression que Sara est « bloquée »)
                                 const input = this.$el.querySelector('input[type="text"]');
                                 if (input) input.focus();
                             });
                         }
+                    },
+                    async callAgent(text) {
+                        // 1) POST form (moins souvent bloqué que JSON)
+                        const form = new FormData();
+                        form.append('message', text);
+                        if (config.restaurantId) form.append('restaurant_id', String(config.restaurantId));
+                        if (this.conversationId) form.append('conversation_id', String(this.conversationId));
+                        form.append('_token', config.csrf);
+
+                        let res = await fetch(config.endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': config.csrf,
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            credentials: 'same-origin',
+                            body: form,
+                        });
+                        let raw = await res.text();
+
+                        // 2) Si o2switch anti-bot coupe le POST → fallback GET
+                        if (res.status === 503 || this.looksLikeO2switchChallenge(raw)) {
+                            const params = new URLSearchParams({ message: text });
+                            if (config.restaurantId) params.set('restaurant_id', String(config.restaurantId));
+                            if (this.conversationId) params.set('conversation_id', String(this.conversationId));
+                            res = await fetch(config.askUrl + '?' + params.toString(), {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                                credentials: 'same-origin',
+                            });
+                            raw = await res.text();
+                        }
+
+                        let data = null;
+                        try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = null; }
+
+                        if (!data || typeof data.reply !== 'string') {
+                            if (this.looksLikeO2switchChallenge(raw) || res.status === 503) {
+                                throw new Error('o2switch a bloqué la requête (anti-bot). Recharge la page, puis réessaie.');
+                            }
+                            if (res.status === 419) {
+                                throw new Error('Session expirée — recharge la page.');
+                            }
+                            throw new Error('Erreur serveur (' + res.status + '). Sur o2switch : git pull + migrate + config:clear.');
+                        }
+                        return data;
+                    },
+                    looksLikeO2switchChallenge(raw) {
+                        const s = String(raw || '').toLowerCase();
+                        return s.includes('security check') || s.includes('test de sécurité') || s.includes('o2s-browser-check') || s.includes('o2swit.ch');
                     },
                     async resetChat() {
                         this.messages = [];

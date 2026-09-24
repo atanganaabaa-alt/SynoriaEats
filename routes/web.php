@@ -48,6 +48,8 @@ Route::get('/restaurants/{restaurant:slug}', [RestaurantController::class, 'show
 Route::get('/companion', [AiConversationController::class, 'show'])->name('companion.show');
 Route::get('/companion/history', [AiConversationController::class, 'history'])->name('companion.history');
 Route::post('/companion/message', [AiConversationController::class, 'message'])->name('companion.message');
+// Contournement o2switch : certains POST JSON sont bloqués (anti-bot 503) — le GET passe
+Route::get('/companion/ask', [AiConversationController::class, 'message'])->name('companion.ask');
 Route::post('/companion/reset', [AiConversationController::class, 'reset'])->name('companion.reset');
 Route::get('/companion/conversations', [AiConversationController::class, 'conversations'])->name('companion.conversations');
 Route::post('/companion/conversations', [AiConversationController::class, 'storeConversation'])->name('companion.conversations.store');

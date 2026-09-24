@@ -597,23 +597,27 @@ class ConversationalAiAgent
 
         $messages[] = ['role' => 'user', 'content' => Str::limit($message, 1500)];
 
+        $isAgentRouter = $this->resolveProvider() === 'agentrouter';
+
         $body = [
             'model' => $model,
             'temperature' => 0.85,
-            'max_tokens' => 900,
+            'max_tokens' => $isAgentRouter ? 500 : 900,
             'messages' => $messages,
         ];
 
-        // Mutualisé (o2switch) : timeout court pour retomber vite sur le cerveau local
-        $isAgentRouter = $this->resolveProvider() === 'agentrouter';
-        $httpTimeout = $isAgentRouter ? 25 : 45;
-        $maxAttempts = $isAgentRouter ? 2 : 1;
+        // Mutualisé (o2switch) : échouer vite → cerveau local (évite 503 gateway)
+        $httpTimeout = (int) config('synoria.companion.timeout', $isAgentRouter ? 12 : 45);
+        $connectTimeout = (int) config('synoria.companion.connect_timeout', 4);
+        $maxAttempts = 1;
 
         $response = null;
         $lastError = null;
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
-                $request = Http::timeout($httpTimeout)->acceptJson();
+                $request = Http::connectTimeout($connectTimeout)
+                    ->timeout($httpTimeout)
+                    ->acceptJson();
 
                 if ($isAgentRouter) {
                     // AgentRouter WAF : exige une empreinte type Claude Code CLI
@@ -627,15 +631,7 @@ class ConversationalAiAgent
                 break;
             } catch (\Throwable $e) {
                 $lastError = $e;
-                $msg = Str::lower($e->getMessage());
-                $retryable = str_contains($msg, 'timeout')
-                    || str_contains($msg, 'curl error 28')
-                    || str_contains($msg, 'curl error 56')
-                    || str_contains($msg, 'connection reset');
-                if (! $retryable || $attempt === $maxAttempts) {
-                    throw $e;
-                }
-                usleep(250_000);
+                throw $e;
             }
         }
 

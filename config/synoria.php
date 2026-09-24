@@ -74,6 +74,8 @@ return [
         'api_key' => env('SYNORIA_AI_API_KEY', env('OPENAI_API_KEY', env('GROQ_API_KEY'))),
         'base_url' => env('SYNORIA_AI_BASE_URL', env('OPENAI_BASE_URL', 'https://api.openai.com/v1')),
         'model' => env('SYNORIA_AI_MODEL', env('OPENAI_MODEL', 'gpt-4o-mini')),
+        'timeout' => (int) env('SYNORIA_AI_TIMEOUT', 12),
+        'connect_timeout' => (int) env('SYNORIA_AI_CONNECT_TIMEOUT', 4),
         'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
         'anthropic_model' => env('ANTHROPIC_MODEL', 'claude-3-5-haiku-latest'),
     ],
