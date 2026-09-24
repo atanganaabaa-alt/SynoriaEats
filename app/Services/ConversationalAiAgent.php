@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\MenuCategory;
 use App\Enums\OrderStatus;
+use App\Models\CompanionConversation;
 use App\Models\CompanionMessage;
 use App\Models\MenuItem;
 use App\Models\Order;
@@ -29,28 +30,53 @@ class ConversationalAiAgent
 
     public function usesLocalOnly(): bool
     {
-        return (string) config('synoria.companion.provider', 'local') === 'local';
+        return $this->resolveProvider() === 'local';
+    }
+
+    public function resolveProvider(): string
+    {
+        $provider = Str::lower((string) config('synoria.companion.provider', 'local'));
+
+        if (in_array($provider, ['openai', 'groq', 'anthropic'], true) && $this->hasUsableApiKey($provider)) {
+            return $provider;
+        }
+
+        // Auto : clé OpenAI/Groq présente → vrai LLM même si .env dit local
+        if ($this->hasUsableApiKey('openai')) {
+            $base = Str::lower((string) config('synoria.companion.base_url', ''));
+
+            return str_contains($base, 'groq.com') ? 'groq' : 'openai';
+        }
+
+        if ($this->hasUsableApiKey('anthropic')) {
+            return 'anthropic';
+        }
+
+        return 'local';
     }
 
     public function isConfigured(): bool
     {
-        if ($this->usesLocalOnly()) {
-            return true;
-        }
-
         if (! (bool) config('synoria.companion.enabled')) {
             return false;
         }
 
-        $key = $this->apiKey();
-
-        if (! filled($key)) {
-            return false;
+        // Local always "configured"; cloud requires a real key
+        if ($this->resolveProvider() === 'local') {
+            return true;
         }
 
-        $normalized = Str::lower(trim($key));
+        return $this->apiKey() !== null;
+    }
 
-        return ! Str::contains($normalized, ['sk-ton-', 'your-api-key', 'changeme', 'xxx']);
+    public function engineLabel(): string
+    {
+        return match ($this->resolveProvider()) {
+            'openai' => 'OpenAI',
+            'groq' => 'Groq',
+            'anthropic' => 'Claude',
+            default => 'Local',
+        };
     }
 
     /**
@@ -92,7 +118,7 @@ class ConversationalAiAgent
             return [
                 'reply' => $this->sanitizeReply($clean),
                 'suggestions' => $suggestions,
-                'mode' => (string) config('synoria.companion.provider', 'openai'),
+                'mode' => $this->resolveProvider(),
                 'agent' => $agent,
                 'preferences' => $this->tastesFor($user, array_merge($learned, $fromTags)),
             ];
@@ -280,22 +306,116 @@ class ConversationalAiAgent
     }
 
     /**
-     * @return list<array{role: string, content: string}>
+     * @return list<array{id: int, title: string, last_message_at: ?string, preview: ?string}>
      */
-    public function loadHistory(?User $user, string $sessionKey, int $limit = 40): array
+    public function listConversations(?User $user, string $sessionKey, int $limit = 40): array
     {
-        $rows = CompanionMessage::query()
+        return CompanionConversation::query()
             ->when(
                 $user,
                 fn ($q) => $q->where('user_id', $user->id),
                 fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
             )
-            ->whereIn('role', ['user', 'assistant'])
+            ->orderByDesc('last_message_at')
             ->orderByDesc('id')
             ->limit($limit)
             ->get()
-            ->reverse()
-            ->values();
+            ->map(function (CompanionConversation $c) {
+                $preview = $c->messages()
+                    ->where('role', 'user')
+                    ->orderByDesc('id')
+                    ->value('content');
+
+                return [
+                    'id' => $c->id,
+                    'title' => $c->title,
+                    'last_message_at' => $c->last_message_at?->toIso8601String(),
+                    'preview' => $preview ? Str::limit($preview, 80) : null,
+                ];
+            })
+            ->all();
+    }
+
+    public function findConversation(?User $user, string $sessionKey, ?int $conversationId): ?CompanionConversation
+    {
+        if (! $conversationId) {
+            return null;
+        }
+
+        return CompanionConversation::query()
+            ->whereKey($conversationId)
+            ->when(
+                $user,
+                fn ($q) => $q->where('user_id', $user->id),
+                fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
+            )
+            ->first();
+    }
+
+    public function createConversation(?User $user, string $sessionKey, ?int $restaurantId = null, ?string $title = null): CompanionConversation
+    {
+        return CompanionConversation::query()->create([
+            'user_id' => $user?->id,
+            'session_key' => $sessionKey,
+            'restaurant_id' => $restaurantId,
+            'title' => $title ?: __('Nouvelle discussion'),
+            'last_message_at' => now(),
+        ]);
+    }
+
+    public function resolveOrCreateConversation(
+        ?User $user,
+        string $sessionKey,
+        ?int $conversationId = null,
+        ?int $restaurantId = null,
+    ): CompanionConversation {
+        if ($conversationId) {
+            $existing = $this->findConversation($user, $sessionKey, $conversationId);
+            if ($existing) {
+                return $existing;
+            }
+
+            return $this->createConversation($user, $sessionKey, $restaurantId);
+        }
+
+        $latest = CompanionConversation::query()
+            ->when(
+                $user,
+                fn ($q) => $q->where('user_id', $user->id),
+                fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
+            )
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($latest) {
+            return $latest;
+        }
+
+        return $this->createConversation($user, $sessionKey, $restaurantId);
+    }
+
+    /**
+     * @return list<array{role: string, content: string, created_at?: ?string}>
+     */
+    public function loadHistory(?User $user, string $sessionKey, int $limit = 40, ?int $conversationId = null): array
+    {
+        $conversation = $this->findConversation($user, $sessionKey, $conversationId);
+
+        $query = CompanionMessage::query()->whereIn('role', ['user', 'assistant']);
+
+        if ($conversation) {
+            $query->where('conversation_id', $conversation->id);
+        } else {
+            // Compat : ancien historique plat
+            $query->when(
+                $user,
+                fn ($q) => $q->where('user_id', $user->id),
+                fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
+            );
+        }
+
+        $rows = $query->orderByDesc('id')->limit($limit)->get()->reverse()->values();
 
         return $rows->map(fn (CompanionMessage $row) => [
             'role' => $row->role,
@@ -310,15 +430,24 @@ class ConversationalAiAgent
         string $userMessage,
         string $assistantMessage,
         ?int $restaurantId = null,
-    ): void {
-        if ($user) {
-            CompanionMessage::query()
-                ->where('session_key', $sessionKey)
-                ->whereNull('user_id')
-                ->update(['user_id' => $user->id]);
+        ?CompanionConversation $conversation = null,
+    ): CompanionConversation {
+        $conversation ??= $this->resolveOrCreateConversation($user, $sessionKey, null, $restaurantId);
+
+        if ($user && $conversation->user_id === null) {
+            $conversation->user_id = $user->id;
         }
 
+        if ($conversation->title === __('Nouvelle discussion') || $conversation->title === 'Nouvelle discussion') {
+            $conversation->title = Str::limit(trim($userMessage), 60);
+        }
+
+        $conversation->restaurant_id = $restaurantId ?? $conversation->restaurant_id;
+        $conversation->last_message_at = now();
+        $conversation->save();
+
         CompanionMessage::query()->create([
+            'conversation_id' => $conversation->id,
             'user_id' => $user?->id,
             'session_key' => $sessionKey,
             'restaurant_id' => $restaurantId,
@@ -327,16 +456,38 @@ class ConversationalAiAgent
         ]);
 
         CompanionMessage::query()->create([
+            'conversation_id' => $conversation->id,
             'user_id' => $user?->id,
             'session_key' => $sessionKey,
             'restaurant_id' => $restaurantId,
             'role' => 'assistant',
             'content' => $assistantMessage,
         ]);
+
+        return $conversation;
     }
 
-    public function clearHistory(?User $user, string $sessionKey): void
+    public function clearHistory(?User $user, string $sessionKey, ?int $conversationId = null): void
     {
+        if ($conversationId) {
+            $this->deleteConversation($user, $sessionKey, $conversationId);
+
+            return;
+        }
+
+        $conversations = CompanionConversation::query()
+            ->when(
+                $user,
+                fn ($q) => $q->where('user_id', $user->id),
+                fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
+            )
+            ->get();
+
+        foreach ($conversations as $conversation) {
+            $conversation->messages()->delete();
+            $conversation->delete();
+        }
+
         CompanionMessage::query()
             ->when(
                 $user,
@@ -344,6 +495,18 @@ class ConversationalAiAgent
                 fn ($q) => $q->where('session_key', $sessionKey)->whereNull('user_id')
             )
             ->delete();
+    }
+
+    public function deleteConversation(?User $user, string $sessionKey, int $conversationId): bool
+    {
+        $conversation = $this->findConversation($user, $sessionKey, $conversationId);
+        if (! $conversation) {
+            return false;
+        }
+        $conversation->messages()->delete();
+        $conversation->delete();
+
+        return true;
     }
 
     /**
@@ -361,7 +524,7 @@ class ConversationalAiAgent
      */
     private function askLlm(string $message, array $context, array $history): string
     {
-        $provider = (string) config('synoria.companion.provider', 'local');
+        $provider = $this->resolveProvider();
 
         return match ($provider) {
             'anthropic' => $this->askAnthropic($message, $context, $history),
@@ -635,23 +798,39 @@ PROMPT;
         $pref->mergeTastes($updates)->save();
     }
 
+    private function hasUsableApiKey(string $provider): bool
+    {
+        $key = match ($provider) {
+            'anthropic' => config('synoria.companion.anthropic_api_key'),
+            default => config('synoria.companion.api_key'),
+        };
+
+        if (! filled($key)) {
+            return false;
+        }
+
+        $normalized = Str::lower(trim((string) $key));
+
+        return ! Str::contains($normalized, ['sk-ton-', 'your-api-key', 'changeme', 'xxx', 'gsk-ton-']);
+    }
+
     private function apiKey(): ?string
     {
-        $provider = (string) config('synoria.companion.provider', 'local');
+        $provider = $this->resolveProvider();
 
         if ($provider === 'anthropic') {
-            $key = config('synoria.companion.anthropic_api_key');
-
-            return filled($key) ? (string) $key : null;
+            return $this->hasUsableApiKey('anthropic')
+                ? (string) config('synoria.companion.anthropic_api_key')
+                : null;
         }
 
         if ($provider === 'local') {
             return null;
         }
 
-        $key = config('synoria.companion.api_key');
-
-        return filled($key) ? (string) $key : null;
+        return $this->hasUsableApiKey('openai')
+            ? (string) config('synoria.companion.api_key')
+            : null;
     }
 
     private function sanitizeReply(string $reply): string

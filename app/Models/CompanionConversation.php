@@ -4,21 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class CompanionMessage extends Model
+class CompanionConversation extends Model
 {
     protected $fillable = [
-        'conversation_id',
         'user_id',
         'session_key',
         'restaurant_id',
-        'role',
-        'content',
+        'title',
+        'last_message_at',
     ];
 
-    public function conversation(): BelongsTo
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsTo(CompanionConversation::class, 'conversation_id');
+        return [
+            'last_message_at' => 'datetime',
+        ];
     }
 
     public function user(): BelongsTo
@@ -29,5 +34,10 @@ class CompanionMessage extends Model
     public function restaurant(): BelongsTo
     {
         return $this->belongsTo(Restaurant::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(CompanionMessage::class, 'conversation_id');
     }
 }

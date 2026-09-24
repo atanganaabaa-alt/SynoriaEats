@@ -49,10 +49,16 @@ Route::get('/companion', [AiConversationController::class, 'show'])->name('compa
 Route::get('/companion/history', [AiConversationController::class, 'history'])->name('companion.history');
 Route::post('/companion/message', [AiConversationController::class, 'message'])->name('companion.message');
 Route::post('/companion/reset', [AiConversationController::class, 'reset'])->name('companion.reset');
+Route::get('/companion/conversations', [AiConversationController::class, 'conversations'])->name('companion.conversations');
+Route::post('/companion/conversations', [AiConversationController::class, 'storeConversation'])->name('companion.conversations.store');
+Route::delete('/companion/conversations/{conversation}', [AiConversationController::class, 'destroyConversation'])->name('companion.conversations.destroy');
 
 Route::get('/api/sara/history', [AiConversationController::class, 'index'])->name('sara.history');
 Route::post('/api/sara/message', [AiConversationController::class, 'sendMessage'])->name('sara.message');
 Route::post('/api/sara/reset', [AiConversationController::class, 'reset'])->name('sara.reset');
+Route::get('/api/sara/conversations', [AiConversationController::class, 'conversations'])->name('sara.conversations');
+Route::post('/api/sara/conversations', [AiConversationController::class, 'storeConversation'])->name('sara.conversations.store');
+Route::delete('/api/sara/conversations/{conversation}', [AiConversationController::class, 'destroyConversation'])->name('sara.conversations.destroy');
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');

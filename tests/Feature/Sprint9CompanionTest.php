@@ -26,6 +26,8 @@ class Sprint9CompanionTest extends TestCase
             'synoria.companion.enabled' => true,
             'synoria.companion.provider' => 'local',
             'synoria.companion.name' => 'Sara',
+            'synoria.companion.api_key' => null,
+            'synoria.companion.anthropic_api_key' => null,
         ]);
     }
 
@@ -72,14 +74,21 @@ class Sprint9CompanionTest extends TestCase
             'Expected budget mention in reply'
         );
 
-        $this->assertDatabaseCount('companion_messages', 4);
+        // Second greeting must not re-introduce Sara the same way
+        $again = $this->actingAs($customer)
+            ->postJson(route('companion.message'), ['message' => 'salut'])
+            ->assertOk()
+            ->json('reply');
+        $this->assertStringNotContainsString('Je suis Sara, ta conseillère', $again);
+
+        $this->assertDatabaseCount('companion_messages', 6);
 
         $history = $this->actingAs($customer)
             ->getJson(route('sara.history'))
             ->assertOk()
             ->json('history');
 
-        $this->assertCount(4, $history);
+        $this->assertCount(6, $history);
 
         $this->assertDatabaseHas('user_preferences', ['user_id' => $customer->id]);
         $pref = UserPreference::query()->where('user_id', $customer->id)->first();
@@ -165,6 +174,27 @@ class Sprint9CompanionTest extends TestCase
         $this->assertStringContainsString('En préparation', $reply);
     }
 
+    public function test_conversations_are_listed_like_modern_ai_threads(): void
+    {
+        $customer = User::factory()->create();
+
+        $this->actingAs($customer)
+            ->postJson(route('sara.message'), ['message' => 'Budget 4000 pour ndolé'])
+            ->assertOk()
+            ->assertJsonStructure(['conversation_id', 'conversations']);
+
+        $this->actingAs($customer)
+            ->postJson(route('sara.conversations.store'))
+            ->assertCreated();
+
+        $list = $this->actingAs($customer)
+            ->getJson(route('sara.conversations'))
+            ->assertOk()
+            ->json('conversations');
+
+        $this->assertGreaterThanOrEqual(2, count($list));
+    }
+
     public function test_reset_clears_persisted_conversation(): void
     {
         $customer = User::factory()->create();
@@ -174,12 +204,13 @@ class Sprint9CompanionTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseCount('companion_messages', 2);
+        $this->assertDatabaseCount('companion_conversations', 1);
 
         $this->actingAs($customer)
             ->postJson(route('companion.reset'))
             ->assertOk();
 
         $this->assertDatabaseCount('companion_messages', 0);
-        $this->assertSame(0, CompanionMessage::query()->count());
+        $this->assertDatabaseCount('companion_conversations', 0);
     }
 }

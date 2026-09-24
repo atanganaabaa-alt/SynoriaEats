@@ -81,6 +81,11 @@ class User extends Authenticatable
         return $this->hasMany(ConversationIa::class);
     }
 
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(CompanionConversation::class);
+    }
+
     public function companionMessages(): HasMany
     {
         return $this->hasMany(CompanionMessage::class);

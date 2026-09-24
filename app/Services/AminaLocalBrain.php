@@ -4,7 +4,7 @@ namespace App\Services;
 
 /**
  * Moteur conversationnel gratuit (sans API payante).
- * Utilise l’historique + le menu réel pour conseiller comme Sara.
+ * Plus « autonome » : anti-répétition, goûts appris, rotation des formulations.
  */
 class AminaLocalBrain
 {
@@ -16,32 +16,46 @@ class AminaLocalBrain
     {
         $message = trim($message);
         $lower = mb_strtolower($message, 'UTF-8');
-        $memory = $this->memoryFromHistory($history, $message);
+        $memory = $this->memoryFromHistory($history, $message, $context);
         $english = $memory['english'];
         $short = $memory['short'];
         $spicy = $memory['spicy'];
+        $turn = $this->userTurnCount($history);
+        $alreadySaid = $this->mentionedDishesFromHistory($history);
 
         if ($this->asksLanguageSwitch($lower)) {
             $english = $this->wantsEnglishExplicit($lower);
-            if ($english) {
-                return $short
-                    ? 'Got it. I’ll reply in English. What are you craving?'
-                    : 'Sure. I’ll keep answering in English from now on. Tell me a budget or a craving and I’ll guide you.';
-            }
 
-            return $short
-                ? 'OK, on reste en français. Tu as faim de quoi ?'
-                : 'Parfait, je te réponds en français. Dis-moi ton budget ou une envie et on trouve ça.';
+            return $this->pick($english, $turn, [
+                $short ? 'Got it. English from now on. Craving?' : 'Sure. I’ll stay in English. Budget or craving?',
+                $short ? 'Switched to English. What sounds good?' : 'Done. I’ll answer in English. Tell me what you want to eat.',
+            ], [
+                $short ? 'OK, on reste en français. Envies ?' : 'Parfait, je reste en français. Budget ou envie ?',
+                $short ? 'Français noté. Tu as faim de quoi ?' : 'C’est noté. Dis-moi ce qui te tente et je pioche dans le vrai menu.',
+            ]);
         }
 
+        // Salut : ne se représente pas à chaque message
         if ($this->isGreeting($lower)) {
+            if ($turn > 0) {
+                return $this->pick($english, $turn, [
+                    $short ? 'Still here. Budget or dish?' : 'Still with you. Want another idea, or a different budget?',
+                    $short ? 'Yep?' : 'I’m listening. Spicy, local, cheap… what direction?',
+                    'Hey again. Shall I pick something new you haven’t seen yet?',
+                ], [
+                    $short ? 'Toujours là. Budget ou plat ?' : 'Je suis toujours là. Une autre idée, ou un autre budget ?',
+                    $short ? 'Oui ?' : 'Je t’écoute. Épicé, local, pas cher… quelle direction ?',
+                    'Rebonjour. Je te sors un truc que je ne t’ai pas encore proposé ?',
+                ]);
+            }
+
             return $english
                 ? ($short
                     ? "Hey, I’m {$agentName}. Budget or craving?"
-                    : "Hey! I’m {$agentName}, your SynoriaEats advisor. Tell me a budget or what you want to eat and I’ll pick real dishes nearby.")
+                    : "Hey! I’m {$agentName}. Give me a budget or a craving and I’ll pick real dishes from open restaurants.")
                 : ($short
                     ? "Salut, moi c’est {$agentName}. Budget ou envie ?"
-                    : "Salut ! Je suis {$agentName}, ta conseillère SynoriaEats. Dis-moi ton budget ou ce que tu veux manger, je te guide avec de vrais plats.");
+                    : "Salut ! Je suis {$agentName}. Donne un budget ou une envie, je choisis des plats réels parmi les restos ouverts.");
         }
 
         if ($this->wantsWait($lower) || $this->asksAboutOrder($lower)) {
@@ -53,7 +67,7 @@ class AminaLocalBrain
         }
 
         if ($this->asksOpenRestaurants($lower)) {
-            return $this->replyCatalog($context, $english, $short, $spicy, $memory['local'], $memory['hearty'], $memory['budget']);
+            return $this->replyCatalog($context, $english, $short, $spicy, $memory['local'], $memory['hearty'], $memory['budget'], $alreadySaid, $turn);
         }
 
         if ($this->asksBilingual($lower) && ! $this->asksLanguageSwitch($lower)) {
@@ -62,10 +76,24 @@ class AminaLocalBrain
                 : 'Oui, français ou anglais. Tu as faim de quoi ?';
         }
 
-        if ($this->isThanks($lower) || $this->isSmallTalk($lower)) {
-            return $english
-                ? ($short ? 'Anytime!' : 'Anytime! Ask if you want another dish or a closer restaurant.')
-                : ($short ? 'Avec plaisir !' : 'Avec plaisir ! Dis-moi si tu veux un autre plat ou un resto plus proche.');
+        if ($this->isThanks($lower)) {
+            return $this->pick($english, $turn, [
+                $short ? 'Anytime!' : 'Glad it helped. Want a different plate or a closer spot?',
+                $short ? 'You got it.' : 'Cool. Say if you want lighter, spicier, or cheaper next.',
+            ], [
+                $short ? 'Avec plaisir !' : 'Content que ça aide. Tu veux un autre plat ou un resto plus proche ?',
+                $short ? 'Nickel.' : 'Parfait. Dis-moi si tu veux plus léger, plus pimenté ou moins cher.',
+            ]);
+        }
+
+        if ($this->isSmallTalk($lower)) {
+            return $this->pick($english, $turn, [
+                $short ? 'Good. Hungry?' : 'I’m good. You hungry? Give a budget and I’ll move.',
+                'All good. What should we eat?',
+            ], [
+                $short ? 'Ça va. Tu as faim ?' : 'Ça va bien. Tu as faim ? Donne un budget et on avance.',
+                'Tranquille. On mange quoi ?',
+            ]);
         }
 
         $budget = $memory['budget'];
@@ -78,7 +106,12 @@ class AminaLocalBrain
             || $wantsHearty
             || $spicy
             || $this->isHungry($lower)
-            || $short; // "fais court" after a topic often still wants a reco
+            || $this->asksAnother($lower);
+
+        // Si l’utilisateur demande « autre chose », forcer une nouvelle reco
+        if ($this->asksAnother($lower)) {
+            $wantsRecommend = true;
+        }
 
         if ($wantsRecommend && ! $this->isNoise($lower)) {
             return $this->replyRecommend(
@@ -89,32 +122,47 @@ class AminaLocalBrain
                 $spicy,
                 $english,
                 $short,
+                $alreadySaid,
+                $turn,
+                $memory['aversions'],
+                $memory['allergies'],
             );
         }
 
-        return $english
-            ? ($short
-                ? 'Give a budget (FCFA) or a craving.'
-                : 'Got it. Give me a budget in FCFA or a craving (local, spicy, filling) and I’ll pick something real.')
-            : ($short
-                ? 'Donne un budget (FCFA) ou une envie.'
-                : 'Ok. Donne-moi un budget en FCFA ou une envie (local, épicé, copieux) et je te choisis un vrai plat.');
+        // Pose une question utile au lieu du même fallback
+        return $this->pick($english, $turn, [
+            $short ? 'Budget (FCFA) or craving?' : 'I need one clue: budget in FCFA, or a craving (local, spicy, filling)?',
+            $short ? 'How much can you spend?' : 'Want me to pick from what’s open near you, or stay on one restaurant?',
+            'Say a max budget and I’ll filter the real menu.',
+        ], [
+            $short ? 'Budget (FCFA) ou envie ?' : 'Il me faut un indice : budget en FCFA, ou une envie (local, épicé, copieux) ?',
+            $short ? 'Tu peux mettre combien ?' : 'Je pioche parmi les restos ouverts, ou on reste sur un resto précis ?',
+            'Donne un budget max et je filtre le vrai menu.',
+        ]);
     }
 
     /**
      * @param  list<array{role: string, content: string}>  $history
-     * @return array{budget: ?int, local: bool, hearty: bool, spicy: bool, short: bool, english: bool}
+     * @param  array<string, mixed>  $context
+     * @return array{budget: ?int, local: bool, hearty: bool, spicy: bool, short: bool, english: bool, aversions: list<string>, allergies: list<string>}
      */
-    private function memoryFromHistory(array $history, string $current): array
+    private function memoryFromHistory(array $history, string $current, array $context): array
     {
+        $tastes = is_array($context['learned_tastes'] ?? null) ? $context['learned_tastes'] : [];
         $budget = $this->extractBudget($current);
+        if ($budget === null && isset($tastes['budget_moyen'])) {
+            $budget = (int) $tastes['budget_moyen'];
+        }
+
         $currentLower = mb_strtolower($current, 'UTF-8');
-        $local = $this->wantsLocal($currentLower);
+        $local = $this->wantsLocal($currentLower) || $this->tasteFlag($tastes, ['local', 'plats_preferes'], 'local');
         $hearty = $this->wantsHearty($currentLower);
-        $spicy = $this->wantsSpicy($currentLower);
+        $spicy = $this->wantsSpicy($currentLower) || $this->tasteFlag($tastes, ['piment'], 'oui|fort|moyen|épic');
         $short = $this->wantsShort($currentLower);
         $english = $this->looksEnglish($currentLower);
         $langLocked = false;
+        $aversions = $this->splitTasteList((string) ($tastes['aversions'] ?? ''));
+        $allergies = $this->splitTasteList((string) ($tastes['allergies'] ?? ''));
 
         foreach (array_reverse($history) as $turn) {
             if (($turn['role'] ?? '') !== 'user') {
@@ -147,11 +195,16 @@ class AminaLocalBrain
             'spicy' => $spicy,
             'short' => $short,
             'english' => $english,
+            'aversions' => $aversions,
+            'allergies' => $allergies,
         ];
     }
 
     /**
      * @param  array<string, mixed>  $context
+     * @param  list<string>  $alreadySaid
+     * @param  list<string>  $aversions
+     * @param  list<string>  $allergies
      */
     private function replyRecommend(
         array $context,
@@ -161,13 +214,21 @@ class AminaLocalBrain
         bool $wantsSpicy,
         bool $english,
         bool $short,
+        array $alreadySaid,
+        int $turn,
+        array $aversions = [],
+        array $allergies = [],
     ): string {
         $restaurant = $context['restaurant'] ?? null;
         $menu = $context['menu'] ?? [];
-        $catalog = $context['catalog'] ?? [];
+        $banned = array_merge($aversions, $allergies);
 
         if ($restaurant && $menu !== []) {
-            $picks = $this->pickDishes($menu, $budget, $wantsLocal, $wantsHearty, $wantsSpicy);
+            $picks = $this->pickDishes($menu, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, $alreadySaid, $banned, $turn);
+            if ($picks === []) {
+                // Relâche l’anti-répétition si plus rien
+                $picks = $this->pickDishes($menu, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, [], $banned, $turn);
+            }
             if ($picks === []) {
                 return $english
                     ? "Nothing fits that budget at **{$restaurant['name']}** right now."
@@ -177,46 +238,53 @@ class AminaLocalBrain
             $limit = $short ? 2 : 3;
             $lines = [];
             foreach (array_slice($picks, 0, $limit) as $dish) {
-                $why = $this->whyDish($dish, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, $english);
-                $lines[] = '- **'.$restaurant['name'].'** — '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*) : '.$why;
+                $why = $this->whyDish($dish, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, $english, $turn);
+                $lines[] = '- **'.$restaurant['name'].'** - '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*) : '.$why;
             }
 
-            $intro = $budget
-                ? ($english
-                    ? ($short
-                        ? "Around {$this->money($budget)}:"
-                        : "You mentioned about {$this->money($budget)}. At **{$restaurant['name']}**, I’d go with:")
-                    : ($short
-                        ? "Vers {$this->money($budget)} :"
-                        : "Tu as parlé d’environ {$this->money($budget)}. Chez **{$restaurant['name']}**, je te penche vers :"))
-                : ($english
-                    ? ($short ? 'My picks:' : "At **{$restaurant['name']}**, I’d go with:")
-                    : ($short ? 'Mes choix :' : "Chez **{$restaurant['name']}**, je te penche vers :"));
+            $intro = $this->recoIntro($english, $short, $budget, (string) $restaurant['name'], $turn, $alreadySaid !== []);
 
             $body = $intro."\n\n".implode("\n\n", $lines);
-
             if ($short) {
                 return $body;
             }
 
-            $outro = $english
-                ? 'Want spicier, lighter, or shall we check your cart?'
-                : 'Tu veux plus épicé, plus léger, ou on regarde ton panier ?';
-
-            return $body."\n\n".$outro;
+            return $body."\n\n".$this->recoOutro($english, $turn);
         }
 
-        if ($catalog === []) {
+        // RAG global : available_dishes puis catalog
+        $global = $context['available_dishes'] ?? [];
+        if (is_array($global) && $global !== []) {
+            $picks = $this->pickDishes($global, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, $alreadySaid, $banned, $turn);
+            if ($picks === []) {
+                $picks = $this->pickDishes($global, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, [], $banned, $turn);
+            }
+            if ($picks !== []) {
+                $limit = $short ? 2 : 3;
+                $lines = [];
+                foreach (array_slice($picks, 0, $limit) as $dish) {
+                    $restoName = (string) ($dish['restaurant'] ?? 'Resto');
+                    $why = $this->whyDish($dish, $budget, $wantsLocal, $wantsHearty, $wantsSpicy, $english, $turn);
+                    $lines[] = '- **'.$restoName.'** - '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*) : '.$why;
+                }
+                $intro = $this->recoIntro($english, $short, $budget, null, $turn, $alreadySaid !== []);
+
+                return $intro."\n\n".implode("\n\n", $lines).($short ? '' : "\n\n".$this->recoOutro($english, $turn));
+            }
+        }
+
+        if (($context['catalog'] ?? []) === []) {
             return $english
                 ? 'No open restaurants with a menu right now.'
                 : 'Aucun resto ouvert avec un menu pour l’instant.';
         }
 
-        return $this->replyCatalog($context, $english, $short, $wantsSpicy, $wantsLocal, $wantsHearty, $budget);
+        return $this->replyCatalog($context, $english, $short, $wantsSpicy, $wantsLocal, $wantsHearty, $budget, $alreadySaid, $turn);
     }
 
     /**
      * @param  array<string, mixed>  $context
+     * @param  list<string>  $alreadySaid
      */
     private function replyCatalog(
         array $context,
@@ -226,6 +294,8 @@ class AminaLocalBrain
         bool $local = false,
         bool $hearty = false,
         ?int $budget = null,
+        array $alreadySaid = [],
+        int $turn = 0,
     ): string {
         $catalog = $context['catalog'] ?? [];
         if ($catalog === []) {
@@ -234,48 +304,77 @@ class AminaLocalBrain
                 : 'Rien d’ouvert avec un menu pour le moment.';
         }
 
+        // Rotation du catalogue pour éviter toujours les mêmes 5 premiers
+        $offset = $turn % max(1, count($catalog));
+        $rotated = array_values(array_merge(
+            array_slice($catalog, $offset),
+            array_slice($catalog, 0, $offset)
+        ));
+
         $limit = $short ? 3 : 5;
         $lines = [];
-        foreach (array_slice($catalog, 0, $limit) as $resto) {
+        foreach (array_slice($rotated, 0, $limit) as $resto) {
             $samples = $resto['sample_dishes'] ?? [];
-            $fit = $this->pickDishes($samples, $budget, $local, $hearty, $spicy);
+            $fit = $this->pickDishes($samples, $budget, $local, $hearty, $spicy, $alreadySaid, [], $turn);
             $dish = $fit[0] ?? ($samples[0] ?? null);
             $fee = $this->money((int) ($resto['delivery_fee'] ?? 0));
 
             if ($dish) {
-                $lines[] = '- **'.$resto['name'].'** — '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*)'
+                $lines[] = '- **'.$resto['name'].'** - '.$dish['name'].' (*'.$this->money((int) $dish['price']).'*)'
                     .($english ? " · delivery {$fee}" : " · livraison {$fee}");
             } else {
-                $lines[] = '- **'.$resto['name'].'** — '
+                $lines[] = '- **'.$resto['name'].'** - '
                     .($english
                         ? "{$resto['prep_time_min']}-{$resto['prep_time_max']} min (*delivery {$fee}*)"
                         : "{$resto['prep_time_min']}-{$resto['prep_time_max']} min (*livraison {$fee}*)");
             }
         }
 
-        $intro = $english ? ($short ? 'Open now:' : 'Here’s what I’d start with:') : ($short ? 'Ouverts :' : 'Voici par où je commencerais :');
+        $intro = $this->pick($english, $turn, [
+            $short ? 'Open now:' : 'Here’s a fresh batch of open spots:',
+            $short ? 'Other options:' : 'If we rotate a bit, I’d look at:',
+            $short ? 'Near you / open:' : 'Different angle, still open and real:',
+        ], [
+            $short ? 'Ouverts :' : 'Voici une sélection fraîche de restos ouverts :',
+            $short ? 'Autres pistes :' : 'Si on change un peu, je regarderais :',
+            $short ? 'Ouverts près de toi :' : 'Autre angle, toujours du vrai menu ouvert :',
+        ]);
 
         return $intro."\n\n".implode("\n\n", $lines);
     }
 
     /**
      * @param  list<array<string, mixed>>  $dishes
+     * @param  list<string>  $alreadySaid
+     * @param  list<string>  $banned
      * @return list<array<string, mixed>>
      */
-    private function pickDishes(array $dishes, ?int $budget, bool $local, bool $hearty, bool $spicy = false): array
-    {
+    private function pickDishes(
+        array $dishes,
+        ?int $budget,
+        bool $local,
+        bool $hearty,
+        bool $spicy = false,
+        array $alreadySaid = [],
+        array $banned = [],
+        int $turn = 0,
+    ): array {
         $scored = [];
-        foreach ($dishes as $dish) {
+        foreach ($dishes as $index => $dish) {
             $price = (int) ($dish['price'] ?? 0);
-            $name = mb_strtolower((string) ($dish['name'] ?? ''), 'UTF-8');
+            $name = (string) ($dish['name'] ?? '');
+            $nameLower = mb_strtolower($name, 'UTF-8');
             $desc = mb_strtolower((string) ($dish['description'] ?? ''), 'UTF-8');
-            $blob = $name.' '.$desc;
+            $blob = $nameLower.' '.$desc;
 
             if ($budget !== null && $price > $budget) {
                 continue;
             }
+            if ($this->matchesAny($blob, $banned)) {
+                continue;
+            }
 
-            $score = 10;
+            $score = 10 + ($index % 3); // léger bruit pour casser l’ordre fixe
             if ($budget !== null) {
                 $score += (int) max(0, 20 - abs($budget - $price) / max(1, $budget / 20));
             }
@@ -288,41 +387,118 @@ class AminaLocalBrain
             if ($spicy && $this->looksSpicy($blob)) {
                 $score += 18;
             }
+            // Fortement pénaliser les plats déjà proposés
+            if ($this->matchesAny($nameLower, $alreadySaid)) {
+                $score -= 40;
+            }
+            // Rotation douce selon le tour de conversation
+            $score += (($turn + $index) % 5);
 
             $scored[] = ['dish' => $dish, 'score' => $score];
         }
 
         usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
 
-        return array_map(fn ($row) => $row['dish'], $scored);
+        // Ne garder que score raisonnable (évite de renvoyer toujours les mêmes malgré pénalité)
+        $filtered = array_values(array_filter($scored, fn ($row) => $row['score'] > -20));
+
+        return array_map(fn ($row) => $row['dish'], $filtered !== [] ? $filtered : $scored);
     }
 
     /**
      * @param  array<string, mixed>  $dish
      */
-    private function whyDish(array $dish, ?int $budget, bool $local, bool $hearty, bool $spicy, bool $english): string
+    private function whyDish(array $dish, ?int $budget, bool $local, bool $hearty, bool $spicy, bool $english, int $turn = 0): string
     {
         $price = (int) ($dish['price'] ?? 0);
         $name = mb_strtolower((string) ($dish['name'] ?? ''), 'UTF-8');
         $desc = mb_strtolower((string) ($dish['description'] ?? ''), 'UTF-8');
         $blob = $name.' '.$desc;
 
+        $reasonsEn = [];
+        $reasonsFr = [];
         if ($spicy && $this->looksSpicy($blob)) {
-            return $english ? 'matches your spicy craving' : 'ça colle à ton envie d’épicé';
+            $reasonsEn[] = 'hits your spicy craving';
+            $reasonsFr[] = 'ça colle à ton envie d’épicé';
         }
         if ($budget !== null && $price <= $budget) {
-            return $english
-                ? 'fits your budget and still feels like a proper meal'
-                : 'ça rentre dans ton budget et ça remplit bien';
+            $reasonsEn[] = 'stays under '.$this->money($budget);
+            $reasonsFr[] = 'reste sous '.$this->money($budget);
         }
         if ($local && $this->looksLocal($name)) {
-            return $english ? 'classic local comfort food' : 'un classique local qui console';
+            $reasonsEn[] = 'classic Cameroon comfort';
+            $reasonsFr[] = 'un classique local qui console';
         }
         if ($hearty && $this->looksHearty($name)) {
-            return $english ? 'filling when you’re really hungry' : 'copieux quand la faim est sérieuse';
+            $reasonsEn[] = 'filling when you’re starving';
+            $reasonsFr[] = 'copieux quand la faim est sérieuse';
+        }
+        if ($reasonsEn === []) {
+            $reasonsEn = ['solid pick on the live menu', 'actually available right now', 'worth a try tonight'];
+            $reasonsFr = ['bon choix sur le menu actuel', 'disponible maintenant', 'vaut le détour ce soir'];
         }
 
-        return $english ? 'solid pick on this menu' : 'un bon choix sur ce menu';
+        $pool = $english ? $reasonsEn : $reasonsFr;
+
+        return $pool[$turn % count($pool)];
+    }
+
+    private function recoIntro(bool $english, bool $short, ?int $budget, ?string $restaurant, int $turn, bool $avoidingRepeat): string
+    {
+        $money = $budget ? $this->money($budget) : null;
+        if ($english) {
+            if ($short) {
+                return $money ? "Around {$money}:" : ($avoidingRepeat ? 'Fresh picks:' : 'My picks:');
+            }
+            $options = $restaurant
+                ? [
+                    $money ? "You said about {$money}. At **{$restaurant}**, this time I’d try:" : "At **{$restaurant}**, here’s a different cut:",
+                    $money ? "Staying near {$money} at **{$restaurant}**:" : "Still at **{$restaurant}**, new angles:",
+                    $avoidingRepeat
+                        ? "Skipping what I already showed. At **{$restaurant}**:"
+                        : "At **{$restaurant}**, I’d go with:",
+                ]
+                : [
+                    $money ? "Around {$money}, from what’s open:" : 'From the live catalog:',
+                    $money ? "Filtering under {$money}:" : ($avoidingRepeat ? 'Something you haven’t seen yet:' : 'Here’s what fits:'),
+                    'Real dishes only, no invention:',
+                ];
+
+            return $options[$turn % count($options)];
+        }
+
+        if ($short) {
+            return $money ? "Vers {$money} :" : ($avoidingRepeat ? 'Nouveaux choix :' : 'Mes choix :');
+        }
+
+        $options = $restaurant
+            ? [
+                $money ? "Tu as parlé d’environ {$money}. Chez **{$restaurant}**, cette fois :" : "Chez **{$restaurant}**, autre sélection :",
+                $money ? "Toujours autour de {$money} chez **{$restaurant}** :" : "Toujours chez **{$restaurant}**, nouveaux angles :",
+                $avoidingRepeat
+                    ? "J’évite ce que je t’ai déjà sorti. Chez **{$restaurant}** :"
+                    : "Chez **{$restaurant}**, je te penche vers :",
+            ]
+            : [
+                $money ? "Vers {$money}, parmi ce qui est ouvert :" : 'Dans le catalogue ouvert :',
+                $money ? "Filtré sous {$money} :" : ($avoidingRepeat ? 'Un truc que tu n’as pas encore vu :' : 'Voici ce qui colle :'),
+                'Uniquement des plats réels, rien d’inventé :',
+            ];
+
+        return $options[$turn % count($options)];
+    }
+
+    private function recoOutro(bool $english, int $turn): string
+    {
+        return $this->pick($english, $turn, [
+            'Want spicier, lighter, or shall we check your cart?',
+            'Say “another one” if you want a different plate.',
+            'I can narrow by distance or drop the price further.',
+        ], [
+            'Tu veux plus épicé, plus léger, ou on regarde ton panier ?',
+            'Dis « autre chose » si tu veux un plat différent.',
+            'Je peux resserrer sur la distance ou baisser encore le budget.',
+        ]);
     }
 
     /**
@@ -388,6 +564,104 @@ class AminaLocalBrain
         return implode("\n\n", array_slice($parts, 0, 2));
     }
 
+    /**
+     * @param  list<string>  $en
+     * @param  list<string>  $fr
+     */
+    private function pick(bool $english, int $turn, array $en, array $fr): string
+    {
+        $pool = $english ? $en : $fr;
+
+        return $pool[$turn % count($pool)];
+    }
+
+    /**
+     * @param  list<array{role: string, content: string}>  $history
+     */
+    private function userTurnCount(array $history): int
+    {
+        $n = 0;
+        foreach ($history as $turn) {
+            if (($turn['role'] ?? '') === 'user') {
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    /**
+     * Plats déjà cités par Sara (anti-répétition).
+     *
+     * @param  list<array{role: string, content: string}>  $history
+     * @return list<string>
+     */
+    private function mentionedDishesFromHistory(array $history): array
+    {
+        $names = [];
+        foreach ($history as $turn) {
+            if (($turn['role'] ?? '') !== 'assistant') {
+                continue;
+            }
+            $content = (string) ($turn['content'] ?? '');
+            if (preg_match_all('/\*\*[^*]+\*\*\s*[-—]\s*([^*\n(]+)/u', $content, $m)) {
+                foreach ($m[1] as $dish) {
+                    $names[] = mb_strtolower(trim($dish), 'UTF-8');
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($names)));
+    }
+
+    /**
+     * @param  list<string>  $needles
+     */
+    private function matchesAny(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            $needle = trim(mb_strtolower((string) $needle, 'UTF-8'));
+            if ($needle !== '' && str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function splitTasteList(string $raw): array
+    {
+        if ($raw === '') {
+            return [];
+        }
+
+        $parts = preg_split('/[,;\/|]+/u', $raw) ?: [];
+
+        return array_values(array_filter(array_map(
+            static fn ($p) => trim(mb_strtolower((string) $p, 'UTF-8')),
+            $parts
+        )));
+    }
+
+    /**
+     * @param  array<string, mixed>  $tastes
+     * @param  list<string>  $keys
+     */
+    private function tasteFlag(array $tastes, array $keys, string $pattern): bool
+    {
+        foreach ($keys as $key) {
+            $val = mb_strtolower((string) ($tastes[$key] ?? ''), 'UTF-8');
+            if ($val !== '' && preg_match('/'.$pattern.'/u', $val)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function extractBudget(string $message): ?int
     {
         if (preg_match('/(\d[\d\s]{2,})\s*(fcfa|f\b|francs?)?/iu', $message, $matches)) {
@@ -409,6 +683,11 @@ class AminaLocalBrain
         return (bool) preg_match('/\b(hi|hey|hello|yo|wassup|salut|bonjour|bonsoir|coucou|slt)\b/u', $lower)
             || str_contains($lower, 'tu parle')
             || str_contains($lower, 'tu me parle');
+    }
+
+    private function asksAnother(string $lower): bool
+    {
+        return (bool) preg_match('/\b(autre chose|autre plat|autre idée|autre idee|something else|another|différent|different|change)\b/u', $lower);
     }
 
     private function wantsWait(string $lower): bool
@@ -442,7 +721,7 @@ class AminaLocalBrain
     private function asksBilingual(string $lower): bool
     {
         return str_contains($lower, 'bilingue')
-            || str_contains($lower, 'english')
+            || (str_contains($lower, 'english') && str_contains($lower, 'french'))
             || str_contains($lower, 'anglais');
     }
 
@@ -525,7 +804,9 @@ class AminaLocalBrain
 
     private function isThanks(string $lower): bool
     {
-        return (bool) preg_match('/\b(merci|thanks|thank you|d[\'’]?acc+ord|ok|okay)\b/u', $lower);
+        return (bool) preg_match('/\b(merci|thanks|thank you|d[\'’]?acc+ord)\b/u', $lower)
+            || $lower === 'ok'
+            || $lower === 'okay';
     }
 
     private function isNoise(string $lower): bool

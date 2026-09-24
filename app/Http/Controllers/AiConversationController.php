@@ -15,7 +15,9 @@ class AiConversationController extends Controller
     {
         $restaurant = $this->resolveRestaurant($request);
         $sessionKey = $this->sessionKey($request);
-        $history = $agent->loadHistory($request->user(), $sessionKey);
+        $conversations = $agent->listConversations($request->user(), $sessionKey);
+        $activeId = (int) $request->input('c', $conversations[0]['id'] ?? 0) ?: null;
+        $history = $agent->loadHistory($request->user(), $sessionKey, 80, $activeId);
         $context = $agent->buildContext(
             $request->user(),
             $restaurant,
@@ -25,15 +27,18 @@ class AiConversationController extends Controller
 
         return view('companion.show', [
             'history' => $history,
+            'conversations' => $conversations,
+            'activeConversationId' => $activeId,
             'context' => $context,
             'restaurant' => $restaurant,
             'agentName' => $agent->agentName(),
+            'engine' => $agent->engineLabel(),
             'configured' => $agent->isConfigured(),
             'suggestions' => $agent->quickSuggestions($context),
         ]);
     }
 
-    /** Historique JSON (alias API Sara + /companion/history). */
+    /** Liste des fils + messages du fil actif. */
     public function index(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
         return $this->history($request, $agent);
@@ -41,11 +46,25 @@ class AiConversationController extends Controller
 
     public function history(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
-        $history = $agent->loadHistory($request->user(), $this->sessionKey($request));
+        $sessionKey = $this->sessionKey($request);
+        $conversationId = $request->filled('conversation_id')
+            ? (int) $request->input('conversation_id')
+            : null;
+
+        $conversations = $agent->listConversations($request->user(), $sessionKey);
+        if (! $conversationId && $conversations !== []) {
+            $conversationId = (int) $conversations[0]['id'];
+        }
+
+        $history = $agent->loadHistory($request->user(), $sessionKey, 80, $conversationId);
 
         return response()->json([
             'history' => $history,
+            'conversations' => $conversations,
+            'conversation_id' => $conversationId,
             'agent' => $agent->agentName(),
+            'engine' => $agent->engineLabel(),
+            'mode' => $agent->resolveProvider(),
             'configured' => $agent->isConfigured(),
             'preferences' => $this->userTastes($request),
             'suggestions' => $agent->quickSuggestions(
@@ -59,7 +78,47 @@ class AiConversationController extends Controller
         ]);
     }
 
-    /** Envoi message (alias API Sara + /companion/message). */
+    public function conversations(Request $request, ConversationalAiAgent $agent): JsonResponse
+    {
+        return response()->json([
+            'conversations' => $agent->listConversations($request->user(), $this->sessionKey($request)),
+            'engine' => $agent->engineLabel(),
+        ]);
+    }
+
+    public function storeConversation(Request $request, ConversationalAiAgent $agent): JsonResponse
+    {
+        $restaurantId = $request->filled('restaurant_id')
+            ? (int) $request->input('restaurant_id')
+            : null;
+
+        $conversation = $agent->createConversation(
+            $request->user(),
+            $this->sessionKey($request),
+            $restaurantId,
+        );
+
+        return response()->json([
+            'conversation' => [
+                'id' => $conversation->id,
+                'title' => $conversation->title,
+                'last_message_at' => $conversation->last_message_at?->toIso8601String(),
+                'preview' => null,
+            ],
+            'conversations' => $agent->listConversations($request->user(), $this->sessionKey($request)),
+        ], 201);
+    }
+
+    public function destroyConversation(Request $request, ConversationalAiAgent $agent, int $conversation): JsonResponse
+    {
+        $ok = $agent->deleteConversation($request->user(), $this->sessionKey($request), $conversation);
+
+        return response()->json([
+            'ok' => $ok,
+            'conversations' => $agent->listConversations($request->user(), $this->sessionKey($request)),
+        ]);
+    }
+
     public function sendMessage(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
         return $this->message($request, $agent);
@@ -70,6 +129,7 @@ class AiConversationController extends Controller
         $validated = $request->validate([
             'message' => ['required', 'string', 'min:1', 'max:1500'],
             'restaurant_id' => ['nullable', 'integer', 'exists:restaurants,id'],
+            'conversation_id' => ['nullable', 'integer', 'exists:companion_conversations,id'],
         ]);
 
         $restaurant = null;
@@ -80,10 +140,15 @@ class AiConversationController extends Controller
         $sessionKey = $this->sessionKey($request);
         $user = $request->user();
 
-        // Mémoire courte pour le LLM (10 derniers tours)
-        $history = $agent->loadHistory($user, $sessionKey, 10);
+        $conversation = $agent->resolveOrCreateConversation(
+            $user,
+            $sessionKey,
+            isset($validated['conversation_id']) ? (int) $validated['conversation_id'] : null,
+            $restaurant?->id,
+        );
 
-        // Préférences apprises (création lazy)
+        $history = $agent->loadHistory($user, $sessionKey, 10, $conversation->id);
+
         if ($user) {
             UserPreference::query()->firstOrCreate(
                 ['user_id' => $user->id],
@@ -100,12 +165,13 @@ class AiConversationController extends Controller
             $this->clientLocation($request),
         );
 
-        $agent->persistTurn(
+        $conversation = $agent->persistTurn(
             $user,
             $sessionKey,
             $validated['message'],
             $result['reply'],
             $restaurant?->id,
+            $conversation,
         );
 
         $history[] = ['role' => 'user', 'content' => $validated['message']];
@@ -115,19 +181,28 @@ class AiConversationController extends Controller
             'reply' => $result['reply'],
             'suggestions' => $result['suggestions'],
             'mode' => $result['mode'],
+            'engine' => $agent->engineLabel(),
             'agent' => $result['agent'],
+            'conversation_id' => $conversation->id,
+            'conversation_title' => $conversation->title,
             'preferences' => $result['preferences'] ?? $this->userTastes($request),
             'history' => array_slice($history, -40),
+            'conversations' => $agent->listConversations($user, $sessionKey),
         ]);
     }
 
     public function reset(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
-        $agent->clearHistory($request->user(), $this->sessionKey($request));
+        $conversationId = $request->filled('conversation_id')
+            ? (int) $request->input('conversation_id')
+            : null;
+
+        $agent->clearHistory($request->user(), $this->sessionKey($request), $conversationId);
 
         return response()->json([
             'ok' => true,
             'agent' => $agent->agentName(),
+            'conversations' => $agent->listConversations($request->user(), $this->sessionKey($request)),
         ]);
     }
 
