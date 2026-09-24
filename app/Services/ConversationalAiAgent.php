@@ -95,6 +95,7 @@ class ConversationalAiAgent
         array $history = [],
         array $matchPreferences = [],
         array $clientLocation = [],
+        bool $forceLocal = false,
     ): array {
         $message = trim($message);
         $learned = $this->learnFromUserMessage($user, $message);
@@ -136,14 +137,14 @@ class ConversationalAiAgent
         $suggestions = $this->quickSuggestions($context);
         $agent = $this->agentName();
 
-        if ($this->usesLocalOnly() || ! $this->isConfigured()) {
+        if ($forceLocal || $this->usesLocalOnly() || ! $this->isConfigured()) {
             $raw = $this->localBrain->reply($message, $context, $history, $agent);
             [$clean, $fromTags] = $this->extractAndApplyPreferenceUpdates($user, $raw);
 
             return [
                 'reply' => $this->sanitizeReply($clean),
                 'suggestions' => $suggestions,
-                'mode' => 'local',
+                'mode' => $forceLocal ? 'local_forced' : 'local',
                 'agent' => $agent,
                 'preferences' => $this->tastesFor($user, array_merge($learned, $fromTags)),
             ];
@@ -603,13 +604,18 @@ class ConversationalAiAgent
             'messages' => $messages,
         ];
 
+        // Mutualisé (o2switch) : timeout court pour retomber vite sur le cerveau local
+        $isAgentRouter = $this->resolveProvider() === 'agentrouter';
+        $httpTimeout = $isAgentRouter ? 25 : 45;
+        $maxAttempts = $isAgentRouter ? 2 : 1;
+
         $response = null;
         $lastError = null;
-        for ($attempt = 1; $attempt <= 2; $attempt++) {
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
-                $request = Http::timeout(60)->acceptJson();
+                $request = Http::timeout($httpTimeout)->acceptJson();
 
-                if ($this->resolveProvider() === 'agentrouter') {
+                if ($isAgentRouter) {
                     // AgentRouter WAF : exige une empreinte type Claude Code CLI
                     $request = $request->withHeaders($this->agentRouterHeaders($key));
                 } else {
@@ -626,10 +632,10 @@ class ConversationalAiAgent
                     || str_contains($msg, 'curl error 28')
                     || str_contains($msg, 'curl error 56')
                     || str_contains($msg, 'connection reset');
-                if (! $retryable || $attempt === 2) {
+                if (! $retryable || $attempt === $maxAttempts) {
                     throw $e;
                 }
-                usleep(400_000);
+                usleep(250_000);
             }
         }
 

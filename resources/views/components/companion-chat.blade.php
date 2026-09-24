@@ -371,8 +371,14 @@
                                     conversation_id: this.conversationId,
                                 }),
                             });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || 'Erreur agent');
+                            const raw = await res.text();
+                            let data = null;
+                            try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = null; }
+                            if (!data || typeof data.reply !== 'string') {
+                                throw new Error(res.status === 419
+                                    ? 'Session expirée — recharge la page.'
+                                    : ('Erreur serveur (' + res.status + '). Vérifie migrate / clé AI sur o2switch.'));
+                            }
                             if (data.agent) this.agentName = data.agent;
                             if (data.engine) this.engine = data.engine;
                             if (data.conversation_id) this.conversationId = data.conversation_id;
@@ -382,7 +388,7 @@
                         } catch (e) {
                             this.messages.push({
                                 role: 'assistant',
-                                content: 'Désolée, j’ai eu un blanc. Réessaie juste après.',
+                                content: (e && e.message) ? String(e.message) : 'Désolée, j’ai eu un blanc. Réessaie juste après.',
                             });
                         } finally {
                             this.loading = false;

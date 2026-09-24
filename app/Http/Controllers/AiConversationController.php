@@ -126,10 +126,13 @@ class AiConversationController extends Controller
 
     public function message(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
+        // o2switch mutualisé : éviter un 504 HTML pendant l’appel LLM
+        @set_time_limit(90);
+
         $validated = $request->validate([
             'message' => ['required', 'string', 'min:1', 'max:1500'],
             'restaurant_id' => ['nullable', 'integer', 'exists:restaurants,id'],
-            'conversation_id' => ['nullable', 'integer', 'exists:companion_conversations,id'],
+            'conversation_id' => ['nullable', 'integer'],
         ]);
 
         $restaurant = null;
@@ -140,55 +143,91 @@ class AiConversationController extends Controller
         $sessionKey = $this->sessionKey($request);
         $user = $request->user();
 
-        $conversation = $agent->resolveOrCreateConversation(
-            $user,
-            $sessionKey,
-            isset($validated['conversation_id']) ? (int) $validated['conversation_id'] : null,
-            $restaurant?->id,
-        );
-
-        $history = $agent->loadHistory($user, $sessionKey, 10, $conversation->id);
-
-        if ($user) {
-            UserPreference::query()->firstOrCreate(
-                ['user_id' => $user->id],
-                ['tastes' => []]
+        try {
+            $conversation = $agent->resolveOrCreateConversation(
+                $user,
+                $sessionKey,
+                isset($validated['conversation_id']) ? (int) $validated['conversation_id'] : null,
+                $restaurant?->id,
             );
+
+            $history = $agent->loadHistory($user, $sessionKey, 10, $conversation->id);
+
+            if ($user) {
+                UserPreference::query()->firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['tastes' => []]
+                );
+            }
+
+            $result = $agent->reply(
+                $validated['message'],
+                $user,
+                $restaurant,
+                $history,
+                $this->matchPreferences($request),
+                $this->clientLocation($request),
+            );
+
+            $conversation = $agent->persistTurn(
+                $user,
+                $sessionKey,
+                $validated['message'],
+                $result['reply'],
+                $restaurant?->id,
+                $conversation,
+            );
+
+            $history[] = ['role' => 'user', 'content' => $validated['message']];
+            $history[] = ['role' => 'assistant', 'content' => $result['reply']];
+
+            return response()->json([
+                'reply' => $result['reply'],
+                'suggestions' => $result['suggestions'],
+                'mode' => $result['mode'],
+                'engine' => $agent->engineLabel(),
+                'agent' => $result['agent'],
+                'conversation_id' => $conversation->id,
+                'conversation_title' => $conversation->title,
+                'preferences' => $result['preferences'] ?? $this->userTastes($request),
+                'history' => array_slice($history, -40),
+                'conversations' => $agent->listConversations($user, $sessionKey),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Companion message failed', [
+                'error' => $e->getMessage(),
+                'class' => $e::class,
+            ]);
+
+            try {
+                $fallback = $agent->reply(
+                    $validated['message'],
+                    $user,
+                    $restaurant,
+                    [],
+                    $this->matchPreferences($request),
+                    $this->clientLocation($request),
+                    forceLocal: true,
+                );
+            } catch (\Throwable) {
+                $fallback = [
+                    'reply' => 'Petit souci technique. Dis-moi ton quartier, un budget ou une envie — je réessaie.',
+                    'suggestions' => [],
+                    'mode' => 'error_fallback',
+                    'agent' => $agent->agentName(),
+                ];
+            }
+
+            return response()->json([
+                'reply' => $fallback['reply'],
+                'suggestions' => $fallback['suggestions'] ?? [],
+                'mode' => $fallback['mode'] ?? 'error_fallback',
+                'engine' => $agent->engineLabel(),
+                'agent' => $fallback['agent'] ?? $agent->agentName(),
+                'conversation_id' => $validated['conversation_id'] ?? null,
+                'error' => config('app.debug') ? $e->getMessage() : 'server_error',
+            ], 200);
         }
-
-        $result = $agent->reply(
-            $validated['message'],
-            $user,
-            $restaurant,
-            $history,
-            $this->matchPreferences($request),
-            $this->clientLocation($request),
-        );
-
-        $conversation = $agent->persistTurn(
-            $user,
-            $sessionKey,
-            $validated['message'],
-            $result['reply'],
-            $restaurant?->id,
-            $conversation,
-        );
-
-        $history[] = ['role' => 'user', 'content' => $validated['message']];
-        $history[] = ['role' => 'assistant', 'content' => $result['reply']];
-
-        return response()->json([
-            'reply' => $result['reply'],
-            'suggestions' => $result['suggestions'],
-            'mode' => $result['mode'],
-            'engine' => $agent->engineLabel(),
-            'agent' => $result['agent'],
-            'conversation_id' => $conversation->id,
-            'conversation_title' => $conversation->title,
-            'preferences' => $result['preferences'] ?? $this->userTastes($request),
-            'history' => array_slice($history, -40),
-            'conversations' => $agent->listConversations($user, $sessionKey),
-        ]);
     }
 
     public function reset(Request $request, ConversationalAiAgent $agent): JsonResponse
