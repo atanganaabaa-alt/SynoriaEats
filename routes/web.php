@@ -50,6 +50,10 @@ Route::get('/companion/history', [AiConversationController::class, 'history'])->
 Route::post('/companion/message', [AiConversationController::class, 'message'])->name('companion.message');
 Route::post('/companion/reset', [AiConversationController::class, 'reset'])->name('companion.reset');
 
+Route::get('/api/sara/history', [AiConversationController::class, 'index'])->name('sara.history');
+Route::post('/api/sara/message', [AiConversationController::class, 'sendMessage'])->name('sara.message');
+Route::post('/api/sara/reset', [AiConversationController::class, 'reset'])->name('sara.reset');
+
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
 
@@ -83,6 +87,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 

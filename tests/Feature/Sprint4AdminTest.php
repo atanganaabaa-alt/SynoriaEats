@@ -143,4 +143,50 @@ class Sprint4AdminTest extends TestCase
             ->assertSee($order->number)
             ->assertSee('750');
     }
+
+    public function test_admin_users_filter_by_role_and_active_status(): void
+    {
+        $admin = User::factory()->admin()->create();
+        User::factory()->restaurantOwner()->create([
+            'name' => 'Owner Filter',
+            'email' => 'owner.filter@example.com',
+            'is_active' => true,
+        ]);
+        User::factory()->create([
+            'name' => 'Customer Filter',
+            'email' => 'customer.filter@example.com',
+            'is_active' => true,
+        ]);
+        User::factory()->restaurantOwner()->create([
+            'name' => 'Suspended Owner',
+            'email' => 'suspended.owner@example.com',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index', [
+                'role' => UserRole::RestaurantOwner->value,
+                'active' => '1',
+            ]))
+            ->assertOk()
+            ->assertSee('Owner Filter')
+            ->assertDontSee('Customer Filter')
+            ->assertDontSee('Suspended Owner');
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index', [
+                'role' => UserRole::RestaurantOwner->value,
+                'active' => '0',
+            ]))
+            ->assertOk()
+            ->assertSee('Suspended Owner')
+            ->assertDontSee('Owner Filter')
+            ->assertDontSee('Customer Filter');
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.index', ['q' => 'customer.filter']))
+            ->assertOk()
+            ->assertSee('Customer Filter')
+            ->assertDontSee('Owner Filter');
+    }
 }

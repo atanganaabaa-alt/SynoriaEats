@@ -13,18 +13,21 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
+        $roleFilter = UserRole::tryFrom((string) $request->input('role', ''));
+        $activeFilter = $request->input('active'); // '1', '0', or null/''
+
         $users = User::query()
             ->when($request->filled('q'), function ($query) use ($request) {
-                $term = '%'.$request->string('q').'%';
+                $term = '%'.trim((string) $request->input('q')).'%';
                 $query->where(function ($inner) use ($term) {
                     $inner->where('name', 'like', $term)
                         ->orWhere('email', 'like', $term)
                         ->orWhere('phone', 'like', $term);
                 });
             })
-            ->when($request->filled('role'), fn ($q) => $q->where('role', $request->string('role')))
-            ->when($request->filled('active'), function ($query) use ($request) {
-                $query->where('is_active', $request->string('active') === '1');
+            ->when($roleFilter !== null, fn ($q) => $q->where('role', $roleFilter))
+            ->when($activeFilter === '1' || $activeFilter === '0', function ($query) use ($activeFilter) {
+                $query->where('is_active', $activeFilter === '1');
             })
             ->latest()
             ->paginate(20)
@@ -41,7 +44,7 @@ class UserController extends Controller
         abort_if($user->id === $request->user()->id, 403, 'Tu ne peux pas te suspendre toi-même.');
         abort_if($user->isAdmin() && ! $request->boolean('is_active'), 403, 'Impossible de suspendre un admin.');
 
-        $validated = $request->validate([
+        $request->validate([
             'is_active' => ['required', 'boolean'],
         ]);
 

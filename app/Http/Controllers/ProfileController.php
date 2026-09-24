@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\CloudinaryUploader;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,23 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Upload or replace the profile avatar.
+     */
+    public function updateAvatar(Request $request, CloudinaryUploader $media): RedirectResponse
+    {
+        $validated = $request->validate([
+            'avatar' => ['required', 'image', 'max:4096'],
+        ]);
+
+        $user = $request->user();
+        $media->deleteIfLocal($user->avatar_url);
+        $user->avatar_url = $media->upload($validated['avatar'], 'avatars');
+        $user->save();
+
+        return back()->with('status', __('Photo de profil mise à jour.'));
     }
 
     /**

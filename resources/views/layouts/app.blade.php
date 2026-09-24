@@ -20,7 +20,7 @@
             @include('layouts.navigation')
 
             @isset($header)
-                <header class="bg-white/70 backdrop-blur-sm border-b border-synoria-yellow/25 dark:bg-slate-900/80 dark:border-slate-700">
+                <header class="bg-white border-b border-synoria-yellow/25 dark:bg-slate-900 dark:border-slate-700">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>

@@ -14,7 +14,7 @@
                 <div class="bg-emerald-50 text-emerald-800 px-4 py-3 rounded-md text-sm">{{ session('status') }}</div>
             @endif
 
-            <form method="GET" class="bg-white shadow-sm sm:rounded-lg p-4 grid gap-3 sm:grid-cols-4">
+            <form method="GET" action="{{ route('admin.users.index') }}" class="bg-white shadow-sm sm:rounded-lg p-4 grid gap-3 sm:grid-cols-4">
                 <input type="search" name="q" value="{{ request('q') }}" placeholder="Nom, email, tél…"
                        class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:col-span-2">
                 <select name="role" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
@@ -25,10 +25,15 @@
                 </select>
                 <select name="active" class="rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
                     <option value="">Actifs & suspendus</option>
-                    <option value="1" @selected(request('active') === '1')>Actifs</option>
-                    <option value="0" @selected(request('active') === '0')>Suspendus</option>
+                    <option value="1" @selected(request()->query('active') === '1')>Actifs</option>
+                    <option value="0" @selected(request()->query('active') === '0')>Suspendus</option>
                 </select>
-                <x-primary-button class="sm:col-span-4 sm:w-fit">Filtrer</x-primary-button>
+                <div class="sm:col-span-4 flex flex-wrap items-center gap-3">
+                    <x-primary-button type="submit">Filtrer</x-primary-button>
+                    @if (request()->hasAny(['q', 'role', 'active']))
+                        <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-500 hover:text-gray-800 underline">Réinitialiser</a>
+                    @endif
+                </div>
             </form>
 
             <div class="bg-white shadow-sm sm:rounded-lg overflow-x-auto">

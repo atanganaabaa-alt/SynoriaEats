@@ -51,10 +51,13 @@ class RestaurantController extends Controller
             ->when($request->filled('max_fee'), fn ($q) => $q->where('delivery_fee', '<=', (int) $request->input('max_fee')));
 
         if ($hasLocation) {
-            $ranked = $matcher->rank($query->get(), $lat, $lng, $matchWeights);
+            $candidates = $query->get();
+            // Avec une recherche texte, ne pas perdre les résultats à cause de la distance stricte
+            $strict = ! $request->filled('q');
+            $ranked = $matcher->rank($candidates, $lat, $lng, $matchWeights, strictDistance: $strict);
 
-            if ($ranked->isEmpty()) {
-                $ranked = $matcher->rank($query->get(), $lat, $lng, $matchWeights, strictDistance: false);
+            if ($ranked->isEmpty() && $strict) {
+                $ranked = $matcher->rank($candidates, $lat, $lng, $matchWeights, strictDistance: false);
             }
 
             $page = max(1, (int) $request->integer('page', 1));

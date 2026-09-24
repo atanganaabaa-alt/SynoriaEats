@@ -4,11 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\MenuCategory;
 use App\Enums\OrderStatus;
-use App\Models\ConversationIa;
+use App\Models\CompanionMessage;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Restaurant;
 use App\Models\User;
+use App\Models\UserPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -71,14 +72,33 @@ class Sprint9CompanionTest extends TestCase
             'Expected budget mention in reply'
         );
 
-        $this->assertDatabaseCount('conversations_ia', 4);
+        $this->assertDatabaseCount('companion_messages', 4);
 
         $history = $this->actingAs($customer)
-            ->getJson(route('companion.history'))
+            ->getJson(route('sara.history'))
             ->assertOk()
             ->json('history');
 
         $this->assertCount(4, $history);
+
+        $this->assertDatabaseHas('user_preferences', ['user_id' => $customer->id]);
+        $pref = UserPreference::query()->where('user_id', $customer->id)->first();
+        $this->assertSame(5000, (int) ($pref->tastes['budget_moyen'] ?? 0));
+    }
+
+    public function test_sara_learns_aversions_from_user_message(): void
+    {
+        $customer = User::factory()->create();
+
+        $this->actingAs($customer)
+            ->postJson(route('sara.message'), [
+                'message' => 'Je n’aime plus le poisson',
+            ])
+            ->assertOk();
+
+        $pref = UserPreference::query()->where('user_id', $customer->id)->first();
+        $this->assertNotNull($pref);
+        $this->assertStringContainsString('poisson', (string) ($pref->tastes['aversions'] ?? ''));
     }
 
     public function test_openai_quota_falls_back_to_local_for_free(): void
@@ -153,12 +173,13 @@ class Sprint9CompanionTest extends TestCase
             ->postJson(route('companion.message'), ['message' => 'Salut'])
             ->assertOk();
 
-        $this->assertDatabaseCount('conversations_ia', 2);
+        $this->assertDatabaseCount('companion_messages', 2);
 
         $this->actingAs($customer)
             ->postJson(route('companion.reset'))
             ->assertOk();
 
-        $this->assertDatabaseCount('conversations_ia', 0);
+        $this->assertDatabaseCount('companion_messages', 0);
+        $this->assertSame(0, CompanionMessage::query()->count());
     }
 }

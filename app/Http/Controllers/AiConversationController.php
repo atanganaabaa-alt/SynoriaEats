@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Restaurant;
+use App\Models\UserPreference;
 use App\Services\ConversationalAiAgent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,12 @@ class AiConversationController extends Controller
         ]);
     }
 
+    /** Historique JSON (alias API Sara + /companion/history). */
+    public function index(Request $request, ConversationalAiAgent $agent): JsonResponse
+    {
+        return $this->history($request, $agent);
+    }
+
     public function history(Request $request, ConversationalAiAgent $agent): JsonResponse
     {
         $history = $agent->loadHistory($request->user(), $this->sessionKey($request));
@@ -40,6 +47,7 @@ class AiConversationController extends Controller
             'history' => $history,
             'agent' => $agent->agentName(),
             'configured' => $agent->isConfigured(),
+            'preferences' => $this->userTastes($request),
             'suggestions' => $agent->quickSuggestions(
                 $agent->buildContext(
                     $request->user(),
@@ -49,6 +57,12 @@ class AiConversationController extends Controller
                 )
             ),
         ]);
+    }
+
+    /** Envoi message (alias API Sara + /companion/message). */
+    public function sendMessage(Request $request, ConversationalAiAgent $agent): JsonResponse
+    {
+        return $this->message($request, $agent);
     }
 
     public function message(Request $request, ConversationalAiAgent $agent): JsonResponse
@@ -65,7 +79,17 @@ class AiConversationController extends Controller
 
         $sessionKey = $this->sessionKey($request);
         $user = $request->user();
-        $history = $agent->loadHistory($user, $sessionKey);
+
+        // Mémoire courte pour le LLM (10 derniers tours)
+        $history = $agent->loadHistory($user, $sessionKey, 10);
+
+        // Préférences apprises (création lazy)
+        if ($user) {
+            UserPreference::query()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['tastes' => []]
+            );
+        }
 
         $result = $agent->reply(
             $validated['message'],
@@ -92,6 +116,7 @@ class AiConversationController extends Controller
             'suggestions' => $result['suggestions'],
             'mode' => $result['mode'],
             'agent' => $result['agent'],
+            'preferences' => $result['preferences'] ?? $this->userTastes($request),
             'history' => array_slice($history, -40),
         ]);
     }
@@ -163,5 +188,20 @@ class AiConversationController extends Controller
             'preset' => $preset,
             'weights' => is_array($weights) ? $weights : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function userTastes(Request $request): array
+    {
+        $user = $request->user();
+        if (! $user) {
+            return [];
+        }
+
+        $pref = UserPreference::query()->where('user_id', $user->id)->first();
+
+        return is_array($pref?->tastes) ? $pref->tastes : [];
     }
 }

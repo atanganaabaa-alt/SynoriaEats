@@ -81,6 +81,16 @@ class User extends Authenticatable
         return $this->hasMany(ConversationIa::class);
     }
 
+    public function companionMessages(): HasMany
+    {
+        return $this->hasMany(CompanionMessage::class);
+    }
+
+    public function preference(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(UserPreference::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;

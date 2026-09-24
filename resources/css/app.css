@@ -97,10 +97,15 @@
     }
 
     .synoria-shell > main,
-    .synoria-shell > header,
-    .synoria-shell > nav {
+    .synoria-shell > header {
         position: relative;
         z-index: 1;
+    }
+
+    /* La nav (et son menu compte) doit toujours passer AU-DESSUS du header flouté */
+    .synoria-shell > nav {
+        position: relative;
+        z-index: 200;
     }
 
     .synoria-panel {

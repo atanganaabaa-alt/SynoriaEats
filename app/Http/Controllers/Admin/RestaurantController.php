@@ -22,10 +22,20 @@ class RestaurantController extends Controller
                 $term = '%'.$request->string('q').'%';
                 $query->where(function ($inner) use ($term) {
                     $inner->where('name', 'like', $term)
-                        ->orWhere('address', 'like', $term);
+                        ->orWhere('address', 'like', $term)
+                        ->orWhere('category', 'like', $term)
+                        ->orWhereHas('owner', function ($owner) use ($term) {
+                            $owner->where('name', 'like', $term)
+                                ->orWhere('email', 'like', $term);
+                        });
                 });
             })
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $status = ApprovalStatus::tryFrom((string) $request->input('status'));
+                if ($status) {
+                    $query->where('status', $status);
+                }
+            })
             ->when($request->filled('validated'), function ($query) use ($request) {
                 $query->where('is_validated', $request->string('validated') === '1');
             })
