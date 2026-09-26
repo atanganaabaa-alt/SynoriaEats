@@ -24,8 +24,18 @@
                     @endif
                 </div>
             @else
-                <div class="bg-emerald-50 text-emerald-900 px-4 py-3 rounded-md text-sm">
-                    Restaurant approuvé: tu peux remplir le menu, uploader les photos et le cadre (logo, couverture).
+                <div class="bg-emerald-50 text-emerald-900 px-4 py-3 rounded-md text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span>Restaurant approuvé: tu peux remplir le menu, uploader les photos et le cadre (logo, couverture).</span>
+                    <a href="{{ route('owner.restaurants.subscription', $restaurant) }}" class="font-semibold underline shrink-0">
+                        Abonnement · {{ $restaurant->subscriptionLabel() }}
+                    </a>
+                </div>
+            @endif
+
+            @if ($restaurant->isApproved() && ! $restaurant->hasCatalogAccess())
+                <div class="bg-amber-50 text-amber-900 px-4 py-3 rounded-md text-sm">
+                    Essai / abonnement expiré — ton resto n’apparaît plus au catalogue.
+                    <a href="{{ route('owner.restaurants.subscription', $restaurant) }}" class="font-semibold underline">Choisir un plan</a>
                 </div>
             @endif
 
@@ -58,6 +68,8 @@
                     <p class="text-amber-700">En attente de validation admin: pas encore visible au catalogue.</p>
                 @elseif ($restaurant->is_open)
                     <p class="text-emerald-700">Visible dans le catalogue client.</p>
+                @elseif (! $restaurant->hasCatalogAccess())
+                    <p class="text-amber-700">Abonnement / essai expiré — <a href="{{ route('owner.restaurants.subscription', $restaurant) }}" class="underline">renouveler</a>.</p>
                 @endif
                 <p><a href="{{ route('restaurants.show', $restaurant) }}" class="text-emerald-700 hover:underline">Voir la page publique</a></p>
             </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CourierController as AdminCourierController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\RestaurantController as AdminRestaurantController;
+use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
 use App\Http\Controllers\Owner\OnboardingController as OwnerOnboardingController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController as OwnerRestaurantController;
+use App\Http\Controllers\Owner\SubscriptionController as OwnerSubscriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\ReviewController;
@@ -30,6 +32,7 @@ Route::get('/', function () {
     $featured = Restaurant::query()
         ->where('is_open', true)
         ->where('is_validated', true)
+        ->withCatalogAccess()
         ->whereHas('menuItems', fn ($q) => $q->where('is_available', true))
         ->with(['menuItems' => fn ($q) => $q->where('is_available', true)->limit(1)])
         ->latest()
@@ -130,6 +133,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('couriers', [AdminCourierController::class, 'store'])->name('couriers.store');
         Route::patch('couriers/{user}', [AdminCourierController::class, 'update'])->name('couriers.update');
         Route::get('commissions', [AdminCommissionController::class, 'index'])->name('commissions.index');
+        Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::patch('subscriptions/{restaurant}', [AdminSubscriptionController::class, 'update'])->name('subscriptions.update');
         Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     });
@@ -169,6 +174,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('menu-items.update');
         Route::delete('menu-items/{menuItem}', [OwnerMenuItemController::class, 'destroy'])
             ->name('menu-items.destroy');
+
+        Route::get('restaurants/{restaurant}/subscription', [OwnerSubscriptionController::class, 'show'])
+            ->name('restaurants.subscription');
+        Route::post('restaurants/{restaurant}/subscription', [OwnerSubscriptionController::class, 'store'])
+            ->name('restaurants.subscription.store');
 
         Route::resource('restaurants', OwnerRestaurantController::class);
     });

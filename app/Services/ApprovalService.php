@@ -8,6 +8,10 @@ use App\Models\User;
 
 class ApprovalService
 {
+    public function __construct(
+        private RestaurantSubscriptionService $subscriptions,
+    ) {}
+
     public function approveRestaurant(Restaurant $restaurant, ?string $notes = null): Restaurant
     {
         $restaurant->update([
@@ -25,6 +29,8 @@ class ApprovalService
             'approved_at' => now(),
             'is_active' => true,
         ]);
+
+        $this->subscriptions->startTrial($restaurant->fresh());
 
         return $restaurant->fresh(['owner', 'documents']);
     }

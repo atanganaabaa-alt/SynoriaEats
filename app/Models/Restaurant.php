@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
+use App\Enums\SubscriptionPlan;
 use Database\Factories\RestaurantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +34,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'status',
     'rejection_reason',
     'reviewed_at',
+    'subscription_plan',
+    'trial_ends_at',
+    'subscription_ends_at',
 ])]
 class Restaurant extends Model
 {
@@ -48,8 +54,11 @@ class Restaurant extends Model
             'longitude' => 'decimal:7',
             'is_open' => 'boolean',
             'is_validated' => 'boolean',
-            'status' => \App\Enums\ApprovalStatus::class,
+            'status' => ApprovalStatus::class,
             'reviewed_at' => 'datetime',
+            'subscription_plan' => SubscriptionPlan::class,
+            'trial_ends_at' => 'datetime',
+            'subscription_ends_at' => 'datetime',
         ];
     }
 
@@ -80,7 +89,58 @@ class Restaurant extends Model
 
     public function isApproved(): bool
     {
-        return $this->status === \App\Enums\ApprovalStatus::Approved && $this->is_validated;
+        return $this->status === ApprovalStatus::Approved && $this->is_validated;
+    }
+
+    public function onTrial(): bool
+    {
+        return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+    }
+
+    public function hasPaidSubscription(): bool
+    {
+        return $this->subscription_ends_at !== null && $this->subscription_ends_at->isFuture();
+    }
+
+    /** Accès catalogue : essai actif OU abonnement payé actif. */
+    public function hasCatalogAccess(): bool
+    {
+        return $this->onTrial() || $this->hasPaidSubscription();
+    }
+
+    public function subscriptionLabel(): string
+    {
+        if ($this->hasPaidSubscription() && $this->subscription_plan) {
+            return $this->subscription_plan->label();
+        }
+
+        if ($this->onTrial()) {
+            return __('Essai gratuit');
+        }
+
+        return __('Expiré');
+    }
+
+    public function accessEndsAt(): ?\Illuminate\Support\Carbon
+    {
+        $ends = collect([$this->trial_ends_at, $this->subscription_ends_at])
+            ->filter(fn ($d) => $d !== null && $d->isFuture())
+            ->sort()
+            ->last();
+
+        return $ends;
+    }
+
+    /**
+     * @param  Builder<Restaurant>  $query
+     * @return Builder<Restaurant>
+     */
+    public function scopeWithCatalogAccess(Builder $query): Builder
+    {
+        return $query->where(function (Builder $inner) {
+            $inner->where('trial_ends_at', '>', now())
+                ->orWhere('subscription_ends_at', '>', now());
+        });
     }
 
     public function logoPublicUrl(): ?string

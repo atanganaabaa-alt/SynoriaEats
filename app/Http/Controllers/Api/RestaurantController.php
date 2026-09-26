@@ -26,6 +26,7 @@ class RestaurantController extends Controller
         $query = Restaurant::query()
             ->where('is_open', true)
             ->where('is_validated', true)
+            ->withCatalogAccess()
             ->with(['menuItems' => fn ($q) => $q->where('is_available', true)])
             ->when($request->filled('q'), function ($query) use ($request) {
                 $term = '%'.$request->string('q').'%';

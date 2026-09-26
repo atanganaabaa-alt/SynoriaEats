@@ -86,8 +86,14 @@ class RestaurantController extends Controller
         $data = $request->safe()->except(['logo', 'cover']);
 
         if ($request->has('is_open')) {
-            $data['is_open'] = $restaurant->isApproved()
-                ? $request->boolean('is_open')
+            $wantOpen = $request->boolean('is_open');
+            if ($wantOpen && (! $restaurant->isApproved() || ! $restaurant->hasCatalogAccess())) {
+                return redirect()
+                    ->route('owner.restaurants.subscription', $restaurant)
+                    ->withErrors(['is_open' => 'Essai / abonnement requis pour ouvrir le restaurant au catalogue.']);
+            }
+            $data['is_open'] = $restaurant->isApproved() && $restaurant->hasCatalogAccess()
+                ? $wantOpen
                 : false;
         }
 

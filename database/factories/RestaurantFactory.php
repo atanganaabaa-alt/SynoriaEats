@@ -50,6 +50,9 @@ class RestaurantFactory extends Factory
             'is_validated' => true,
             'status' => ApprovalStatus::Approved,
             'reviewed_at' => now(),
+            'trial_ends_at' => now()->addDays(30),
+            'subscription_plan' => null,
+            'subscription_ends_at' => null,
         ];
     }
 
@@ -60,6 +63,27 @@ class RestaurantFactory extends Factory
             'is_open' => false,
             'status' => ApprovalStatus::Pending,
             'reviewed_at' => null,
+            'trial_ends_at' => null,
+            'subscription_ends_at' => null,
+            'subscription_plan' => null,
+        ]);
+    }
+
+    public function subscribed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'subscription_plan' => \App\Enums\SubscriptionPlan::Essentiel,
+            'subscription_ends_at' => now()->addYear(),
+            'trial_ends_at' => now()->subDay(),
+        ]);
+    }
+
+    public function expired(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'trial_ends_at' => now()->subDays(5),
+            'subscription_ends_at' => now()->subDays(2),
+            'subscription_plan' => \App\Enums\SubscriptionPlan::Essentiel,
         ]);
     }
 }

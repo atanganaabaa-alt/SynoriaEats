@@ -227,6 +227,7 @@ class ConversationalAiAgent
         $catalogQuery = Restaurant::query()
             ->where('is_open', true)
             ->where('is_validated', true)
+            ->withCatalogAccess()
             ->whereHas('menuItems', fn ($q) => $q->where('is_available', true))
             ->with(['menuItems' => fn ($q) => $q
                 ->where('is_available', true)
@@ -273,7 +274,7 @@ class ConversationalAiAgent
         $availableDishes = MenuItem::query()
             ->where('is_available', true)
             ->where('category', '!=', MenuCategory::Accompagnements->value)
-            ->whereHas('restaurant', fn ($q) => $q->where('is_open', true)->where('is_validated', true))
+            ->whereHas('restaurant', fn ($q) => $q->where('is_open', true)->where('is_validated', true)->withCatalogAccess())
             ->with('restaurant:id,name,slug')
             ->when($restaurant, fn ($q) => $q->orderByRaw('restaurant_id = ? DESC', [$restaurant->id]))
             ->orderBy('price')

@@ -4,6 +4,18 @@ return [
 
     'commission_rate' => (float) env('SYNORIA_COMMISSION_RATE', 0.10),
 
+    'subscriptions' => [
+        'trial_days' => (int) env('SYNORIA_SUBSCRIPTION_TRIAL_DAYS', 30),
+        'plans' => [
+            'essentiel' => [
+                'price' => (int) env('SYNORIA_PLAN_ESSENTIEL_PRICE', 15000),
+            ],
+            'pro' => [
+                'price' => (int) env('SYNORIA_PLAN_PRO_PRICE', 25000),
+            ],
+        ],
+    ],
+
     'payments' => [
         'sandbox' => (bool) env('SYNORIA_PAYMENTS_SANDBOX', true),
     ],

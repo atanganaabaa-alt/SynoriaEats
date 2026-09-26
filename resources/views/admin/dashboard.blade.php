@@ -14,6 +14,7 @@
                 <a href="{{ route('admin.couriers.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Livreurs</a>
                 <a href="{{ route('admin.orders.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Audit commandes</a>
                 <a href="{{ route('admin.commissions.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Commissions</a>
+                <a href="{{ route('admin.subscriptions.index') }}" class="px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50">Abonnements</a>
             </nav>
         </div>
     </x-slot>

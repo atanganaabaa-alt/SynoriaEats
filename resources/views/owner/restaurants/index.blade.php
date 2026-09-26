@@ -15,8 +15,8 @@
             @endif
 
             <p class="text-sm text-synoria-ink-soft">
-                Un restaurant n’apparaît aux clients que s’il est <strong>approuvé</strong> par l’admin <strong>et ouvert</strong>.
-                Un « Nouveau restaurant » reste en attente jusqu’à validation — il ne contourne pas le contrôle admin.
+                Un restaurant n’apparaît aux clients que s’il est <strong>approuvé</strong>, <strong>ouvert</strong>,
+                et couvert par l’<strong>essai 30 jours</strong> ou un <strong>abonnement</strong> (Essentiel / Pro).
             </p>
 
             @forelse ($restaurants as $restaurant)
@@ -28,8 +28,11 @@
                             <p class="mt-1 text-xs">
                                 @if ($restaurant->isApproved())
                                     <span class="text-emerald-700 font-medium">Approuvé</span>
-                                    @if (! $restaurant->is_open)
-                                        · <span class="text-amber-700">Fermé au catalogue</span> — ouvre-le pour que les clients le voient
+                                    · <span class="{{ $restaurant->hasCatalogAccess() ? 'text-emerald-700' : 'text-amber-700' }}">{{ $restaurant->subscriptionLabel() }}</span>
+                                    @if (! $restaurant->hasCatalogAccess())
+                                        · <span class="text-amber-700">Pas visible</span>
+                                    @elseif (! $restaurant->is_open)
+                                        · <span class="text-amber-700">Fermé au catalogue</span>
                                     @else
                                         · <span class="text-emerald-700">Visible au catalogue</span>
                                     @endif
@@ -42,6 +45,7 @@
                         </a>
                         <div class="flex items-center gap-3 text-sm shrink-0">
                             @if ($restaurant->isApproved())
+                                <a href="{{ route('owner.restaurants.subscription', $restaurant) }}" class="text-synoria-ink font-medium">Abo</a>
                                 <form method="POST" action="{{ route('owner.restaurants.update', $restaurant) }}">
                                     @csrf
                                     @method('PUT')
