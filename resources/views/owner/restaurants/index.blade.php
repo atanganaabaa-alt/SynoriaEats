@@ -46,9 +46,12 @@
                                 @endif
                             </p>
                         </a>
-                        <div class="flex items-center gap-3 text-sm shrink-0">
+                        <div class="flex flex-wrap items-center gap-2 text-sm shrink-0">
                             @if ($restaurant->isApproved())
-                                <a href="{{ route('owner.restaurants.subscription', $restaurant) }}" class="text-synoria-ink font-medium">Abo</a>
+                                <a href="{{ route('owner.restaurants.subscription', $restaurant) }}"
+                                   class="inline-flex items-center rounded-md border-2 border-amber-400 bg-amber-100 px-3 py-1.5 text-sm font-bold text-amber-950 shadow-sm hover:bg-amber-200">
+                                    {{ __('Abonnement') }}
+                                </a>
                                 <form method="POST" action="{{ route('owner.restaurants.update', $restaurant) }}">
                                     @csrf
                                     @method('PUT')
@@ -56,12 +59,15 @@
                                     <input type="hidden" name="address" value="{{ $restaurant->address }}">
                                     <input type="hidden" name="is_open" value="{{ $restaurant->is_open ? '0' : '1' }}">
                                     <button type="submit"
-                                            class="px-3 py-1.5 rounded-md text-sm font-medium {{ $restaurant->is_open ? 'bg-slate-100 text-slate-700' : 'bg-emerald-600 text-white' }}">
-                                        {{ $restaurant->is_open ? 'Fermer' : 'Ouvrir au catalogue' }}
+                                            class="px-3 py-1.5 rounded-md text-sm font-medium {{ $restaurant->is_open ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-emerald-600 text-white hover:bg-emerald-500' }}">
+                                        {{ $restaurant->is_open ? __('Fermer') : __('Ouvrir au catalogue') }}
                                     </button>
                                 </form>
                             @endif
-                            <a href="{{ route('owner.restaurants.show', $restaurant) }}" class="text-emerald-700 font-medium">Gérer →</a>
+                            <a href="{{ route('owner.restaurants.show', $restaurant) }}"
+                               class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">
+                                {{ __('Gérer') }} →
+                            </a>
                         </div>
                     </div>
                 </div>
