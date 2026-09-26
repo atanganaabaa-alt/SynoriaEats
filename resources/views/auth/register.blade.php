@@ -11,7 +11,6 @@
             {{ __('Continuer avec Google') }}
         </a>
         <p class="text-center text-xs text-gray-500 dark:text-gray-400">{{ __('Restaurateur ?') }} <a href="{{ route('google.redirect', ['role' => 'restaurant_owner']) }}" class="text-synoria-green hover:underline">{{ __('S’inscrire avec Google') }}</a></p>
-        <p class="text-center text-xs text-gray-500 dark:text-gray-400">{{ __('Livreur : pas d’inscription libre. L’admin t’invite via un partenariat, puis tu te connectes.') }}</p>
         <div class="relative my-2">
             <div class="absolute inset-0 flex items-center" aria-hidden="true">
                 <div class="w-full border-t border-gray-200 dark:border-slate-700"></div>
