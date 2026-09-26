@@ -105,7 +105,7 @@
                     </template>
                 </div>
                 <p class="border-t border-synoria-yellow/20 px-3 py-2 text-[11px] text-synoria-ink-faint dark:border-slate-700 dark:text-gray-500">
-                    {{ __('Moteur') }} : <span x-text="engine"></span>
+                    {{ __('Tes fils sont sauvegardés sur ce compte.') }}
                 </p>
             </aside>
         @endif
@@ -119,11 +119,7 @@
             >
                 <div class="min-w-0 select-none">
                     <p class="truncate text-sm font-semibold text-synoria-yellow" x-text="agentName"></p>
-                    <p class="text-[11px] text-white/70">
-                        <span x-text="engine"></span>
-                        <span x-show="threads"> · </span>
-                        <span x-show="threads" x-text="activeTitle"></span>
-                    </p>
+                    <p class="text-[11px] text-white/70" x-show="threads" x-text="activeTitle"></p>
                 </div>
                 <div class="flex shrink-0 items-center gap-2" @mousedown.stop>
                     @if ($threads)

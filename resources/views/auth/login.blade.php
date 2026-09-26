@@ -47,16 +47,22 @@
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:text-gray-300" href="{{ route('password.request') }}">
-                    {{ __('Mot de passe oublié ?') }}
-                </a>
-            @endif
+        <div class="flex items-center justify-between gap-3 mt-4">
+            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:text-gray-300" href="{{ route('register') }}">
+                {{ __('Pas de compte ? S’inscrire') }}
+            </a>
 
-            <x-primary-button class="ms-3">
-                {{ __('Connexion') }}
-            </x-primary-button>
+            <div class="flex items-center gap-3">
+                @if (Route::has('password.request'))
+                    <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:text-gray-300" href="{{ route('password.request') }}">
+                        {{ __('Mot de passe oublié ?') }}
+                    </a>
+                @endif
+
+                <x-primary-button>
+                    {{ __('Connexion') }}
+                </x-primary-button>
+            </div>
         </div>
     </form>
 </x-guest-layout>

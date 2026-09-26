@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1">
-            <a href="{{ route('restaurants.index') }}" class="text-sm text-synoria-green hover:underline">← {{ __('Restaurants') }}</a>
+            <x-back-link :href="route('restaurants.index')" :label="__('Restaurants')" />
             <h2 class="font-semibold text-xl text-synoria-ink leading-tight dark:text-white">{{ $restaurant->name }}</h2>
             <p class="text-sm text-synoria-ink-soft">{{ $restaurant->address }} · ★ {{ number_format($restaurant->rating, 1) }}</p>
         </div>

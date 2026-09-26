@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <a href="{{ route('admin.dashboard') }}" class="text-sm text-emerald-700 hover:underline">← Dashboard</a>
+                <x-back-link :href="route('admin.dashboard')" label="Dashboard" />
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Abonnements restos</h2>
                 <p class="text-sm text-gray-500">Essai {{ $trialDays }} j · Essentiel {{ number_format($plans[0]->yearlyPrice(), 0, ',', ' ') }} · Pro {{ number_format($plans[1]->yearlyPrice(), 0, ',', ' ') }} FCFA / an</p>
             </div>

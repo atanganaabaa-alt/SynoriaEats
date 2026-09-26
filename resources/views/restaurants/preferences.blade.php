@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-2">
-            <a href="{{ route('restaurants.index') }}" class="text-sm text-emerald-700 hover:underline">← {{ __('Retour aux restaurants') }}</a>
+            <x-back-link :href="route('restaurants.index')" :label="__('Retour aux restaurants')" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ __('Personnaliser ma sélection') }}</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Choisis un profil ou ajuste finement ce qui compte pour toi.') }}</p>
         </div>

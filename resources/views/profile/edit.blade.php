@@ -1,8 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
+        <div>
+            <x-back-link :href="route('dashboard')" :label="__('Tableau de bord')" />
+            <h2 class="mt-1 font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Profile') }}
+            </h2>
+        </div>
     </x-slot>
 
     <div class="py-12">

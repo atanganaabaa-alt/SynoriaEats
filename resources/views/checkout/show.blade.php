@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1">
-            <a href="{{ route('cart.show') }}" class="text-sm text-emerald-700 hover:underline dark:text-emerald-400">← {{ __('Panier') }}</a>
+            <x-back-link :href="route('cart.show')" :label="__('Panier')" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ __('Finaliser la commande') }}</h2>
         </div>
     </x-slot>

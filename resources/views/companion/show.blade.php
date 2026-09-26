@@ -2,10 +2,10 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ $agentName ?? 'Sara' }}</h2>
+                <x-back-link :href="route('home')" :label="__('Accueil')" />
+                <h2 class="mt-1 font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ $agentName ?? 'Sara' }}</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Discussions enregistrées · moteur') }} :
-                    <span class="font-medium text-synoria-green">{{ $engine ?? 'Local' }}</span>
+                    {{ __('Discussions enregistrées') }}
                     @if ($restaurant)
                         · {{ __('Contexte') }} : <strong>{{ $restaurant->name }}</strong>
                     @endif

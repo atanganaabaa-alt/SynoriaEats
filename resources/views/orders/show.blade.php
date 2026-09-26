@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1">
-            <a href="{{ route('orders.index') }}" class="text-sm text-emerald-700 hover:underline dark:text-emerald-400">← {{ __('Mes commandes') }}</a>
+            <x-back-link :href="route('orders.index')" :label="__('Mes commandes')" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ $order->number }}</h2>
         </div>
     </x-slot>

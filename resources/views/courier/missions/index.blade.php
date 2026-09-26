@@ -2,7 +2,8 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Mes missions</h2>
+                <x-back-link :href="route('dashboard')" :label="__('Tableau de bord')" />
+                <h2 class="mt-1 font-semibold text-xl text-gray-800 leading-tight">Mes missions</h2>
                 <p class="text-sm text-gray-500">Note livreur ★ {{ number_format(auth()->user()->rating ?? 0, 1) }} · {{ auth()->user()->delivery_count }} livraisons</p>
             </div>
         </div>

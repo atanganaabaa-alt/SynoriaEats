@@ -1,7 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between gap-3">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Mes restaurants</h2>
+            <div>
+                <x-back-link :href="route('dashboard')" :label="__('Tableau de bord')" />
+                <h2 class="mt-1 font-semibold text-xl text-gray-800 leading-tight">Mes restaurants</h2>
+            </div>
             <a href="{{ route('owner.restaurants.create') }}" class="inline-flex items-center px-3 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-500">
                 + Nouveau restaurant
             </a>

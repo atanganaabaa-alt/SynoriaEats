@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ __('Mon panier') }}</h2>
+        <div>
+            <x-back-link :href="route('restaurants.index')" :label="__('Restaurants')" />
+            <h2 class="mt-1 font-semibold text-xl text-gray-800 leading-tight dark:text-white">{{ __('Mon panier') }}</h2>
+        </div>
     </x-slot>
 
     <div class="py-8">

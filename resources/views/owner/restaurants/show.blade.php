@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <a href="{{ route('owner.restaurants.index') }}" class="text-sm text-emerald-700 hover:underline">← Mes restaurants</a>
+                <x-back-link :href="route('owner.restaurants.index')" :label="__('Mes restaurants')" />
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $restaurant->name }}</h2>
             </div>
             @can('update', $restaurant)

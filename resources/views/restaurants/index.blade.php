@@ -2,7 +2,8 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
+                <x-back-link :href="route('home')" :label="__('Accueil')" />
+                <h2 class="mt-1 font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
                     {{ __('Restaurants') }}
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">

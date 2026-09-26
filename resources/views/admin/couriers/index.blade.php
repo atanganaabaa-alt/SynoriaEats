@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div>
-            <a href="{{ route('admin.dashboard') }}" class="text-sm text-emerald-700 hover:underline">← Dashboard</a>
+            <x-back-link :href="route('admin.dashboard')" label="Dashboard" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Livreurs partenaires</h2>
         </div>
     </x-slot>

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div>
-            <a href="{{ route('owner.restaurants.show', $restaurant) }}" class="text-sm text-emerald-700 hover:underline">← {{ $restaurant->name }}</a>
+            <x-back-link :href="route('owner.restaurants.show', $restaurant)" :label="$restaurant->name" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Abonnement Synoria') }}</h2>
             <p class="text-sm text-gray-500">{{ __('Essai gratuit :days jours à l’approbation, puis Essentiel ou Pro.', ['days' => $trialDays]) }}</p>
         </div>

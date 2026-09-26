@@ -15,7 +15,10 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-synoria-ink antialiased dark:text-gray-100">
-        <div class="synoria-shell flex flex-col sm:justify-center items-center pt-6 sm:pt-0 min-h-screen">
+        <div class="synoria-shell flex flex-col sm:justify-center items-center pt-6 sm:pt-0 min-h-screen relative">
+            <div class="absolute top-4 left-4 z-10">
+                <x-back-link :href="route('home')" :label="__('Accueil')" />
+            </div>
             <div class="absolute top-4 right-4 z-10">
                 <x-ui-preferences />
             </div>
