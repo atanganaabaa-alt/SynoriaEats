@@ -219,7 +219,7 @@
     "Se souvenir de moi": "Remember me",
     "Mot de passe oublié ?": "Forgot password?",
     "Confirmer le mot de passe": "Confirm password",
-    "Google n’est pas encore configuré. Dans Google Cloud Console, crée un ID client OAuth (Application Web), puis lance : php artisan synoria:google \"TON_VRAI_CLIENT_ID\" \"TON_VRAI_SECRET\"": "Google is not configured yet. In Google Cloud Console, create an OAuth Web client ID, then run: php artisan synoria:google \"YOUR_REAL_CLIENT_ID\" \"YOUR_REAL_SECRET\"",
+    "Connexion Google indisponible pour le moment.": "Google sign-in is unavailable for now.",
     "ou avec ton email et mot de passe": "or with your email and password",
     "Inscription en un clic avec Google": "Sign up in one click with Google",
     "Google · Client": "Google · Customer",

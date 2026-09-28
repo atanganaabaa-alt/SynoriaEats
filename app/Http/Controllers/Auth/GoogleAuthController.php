@@ -21,7 +21,7 @@ class GoogleAuthController extends Controller
             return redirect()
                 ->route('login')
                 ->withErrors([
-                    'email' => __('Google n’est pas encore configuré. Dans Google Cloud Console, crée un ID client OAuth (Application Web), puis lance : php artisan synoria:google "TON_VRAI_CLIENT_ID" "TON_VRAI_SECRET"'),
+                    'email' => __('Connexion Google indisponible pour le moment.'),
                 ]);
         }
 
