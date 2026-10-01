@@ -225,7 +225,6 @@ class AiConversationController extends Controller
                 'engine' => $agent->engineLabel(),
                 'agent' => $fallback['agent'] ?? $agent->agentName(),
                 'conversation_id' => $validated['conversation_id'] ?? null,
-                'error' => config('app.debug') ? $e->getMessage() : 'server_error',
             ], 200);
         }
     }

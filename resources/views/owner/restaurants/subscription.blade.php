@@ -3,7 +3,7 @@
         <div>
             <x-back-link :href="route('owner.restaurants.show', $restaurant)" :label="$restaurant->name" />
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Abonnement Synoria') }}</h2>
-            <p class="text-sm text-gray-500">{{ __('Essai gratuit :days jours à l’approbation, puis Essentiel ou Pro.', ['days' => $trialDays]) }}</p>
+            <p class="text-sm text-gray-500">{{ __('Essai gratuit :days jours, puis Essentiel ou Pro, facturés chaque mois.', ['days' => $trialDays]) }}</p>
         </div>
     </x-slot>
 
@@ -47,8 +47,8 @@
                     <div class="bg-white shadow-sm sm:rounded-lg p-6 flex flex-col">
                         <h3 class="font-semibold text-lg text-gray-900">{{ $plan->label() }}</h3>
                         <p class="mt-1 text-2xl font-bold text-emerald-700">
-                            {{ number_format($plan->yearlyPrice(), 0, ',', ' ') }}
-                            <span class="text-sm font-normal text-gray-500">FCFA / an</span>
+                            {{ number_format($plan->monthlyPrice(), 0, ',', ' ') }}
+                            <span class="text-sm font-normal text-gray-500">FCFA / mois</span>
                         </p>
                         <p class="mt-3 text-sm text-gray-600 flex-1">{{ $plan->description() }}</p>
                         <form method="POST" action="{{ route('owner.restaurants.subscription.store', $restaurant) }}" class="mt-4">
@@ -56,7 +56,7 @@
                             <input type="hidden" name="plan" value="{{ $plan->value }}">
                             <x-primary-button class="w-full justify-center">
                                 {{ $restaurant->subscription_plan === $plan && $restaurant->hasPaidSubscription()
-                                    ? __('Renouveler 1 an')
+                                    ? __('Renouveler 1 mois')
                                     : __('Activer (sandbox)') }}
                             </x-primary-button>
                         </form>

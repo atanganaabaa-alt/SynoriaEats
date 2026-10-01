@@ -46,7 +46,7 @@ class RestaurantSubscriptionService
 
         $restaurant->update([
             'subscription_plan' => $plan,
-            'subscription_ends_at' => $start->copy()->addYear(),
+            'subscription_ends_at' => $start->copy()->addMonth(),
         ]);
 
         return $restaurant->fresh();

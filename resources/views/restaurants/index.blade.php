@@ -70,6 +70,9 @@
                                 @endif
                                 <div class="min-w-0">
                                     <h3 class="text-lg font-semibold text-synoria-ink">{{ $restaurant->name }}</h3>
+                                    @if ($restaurant->isFeatured())
+                                        <span class="mt-1 inline-block rounded-full bg-synoria-yellow px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-synoria-ink">Pro</span>
+                                    @endif
                                     <p class="text-sm text-synoria-green">{{ $restaurant->category ? __($restaurant->category) : '' }}</p>
                                 </div>
                             </div>

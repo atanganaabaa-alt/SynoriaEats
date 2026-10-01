@@ -15,6 +15,12 @@ class OrderCheckoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->travelTo(now()->setTime(15, 0));
+    }
+
     public function test_customer_can_add_to_cart_checkout_and_pay(): void
     {
         $owner = User::factory()->restaurantOwner()->create();

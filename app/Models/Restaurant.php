@@ -108,6 +108,11 @@ class Restaurant extends Model
         return $this->onTrial() || $this->hasPaidSubscription();
     }
 
+    public function isFeatured(): bool
+    {
+        return $this->hasPaidSubscription() && $this->subscription_plan === SubscriptionPlan::Pro;
+    }
+
     public function subscriptionLabel(): string
     {
         if ($this->hasPaidSubscription() && $this->subscription_plan) {

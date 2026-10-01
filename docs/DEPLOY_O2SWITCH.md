@@ -369,6 +369,8 @@ php artisan view:cache
 php artisan up
 ```
 
+Après ce déploiement, le `.env` du serveur doit contenir les clés NotchPay (jamais commitées) et `SYNORIA_PAYMENTS_SANDBOX=false` pour encaisser vraiment. Webhook à coller dans NotchPay : `https://synoriaeats.gsi2026.com/api/payments/notchpay/webhook`. Les abonnements resto sont en FCFA par mois (Essentiel 15 000, Pro 25 000) : leur encaissement reste simulé tant que le bouton affiche « sandbox ».
+
 ---
 
 ## 14. Checklist « 1ʳᵉ version OK »

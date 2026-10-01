@@ -32,5 +32,9 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="SYNORIA_PAYMENTS_SANDBOX" value="true"/>
+        <env name="NOTCHPAY_PUBLIC_KEY" value=""/>
+        <env name="NOTCHPAY_PRIVATE_KEY" value=""/>
+        <env name="NOTCHPAY_HASH_KEY" value=""/>
     </php>
 </phpunit>

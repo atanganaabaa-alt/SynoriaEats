@@ -14,6 +14,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AiConversationController;
 use App\Http\Controllers\Courier\MissionController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Payments\NotchPayWebhookController;
 use App\Http\Controllers\Owner\MenuItemController as OwnerMenuItemController;
 use App\Http\Controllers\Owner\OnboardingController as OwnerOnboardingController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
@@ -64,6 +65,9 @@ Route::post('/api/sara/reset', [AiConversationController::class, 'reset'])->name
 Route::get('/api/sara/conversations', [AiConversationController::class, 'conversations'])->name('sara.conversations');
 Route::post('/api/sara/conversations', [AiConversationController::class, 'storeConversation'])->name('sara.conversations.store');
 Route::delete('/api/sara/conversations/{conversation}', [AiConversationController::class, 'destroyConversation'])->name('sara.conversations.destroy');
+
+Route::get('/payments/notchpay/return', [NotchPayWebhookController::class, 'returned'])
+    ->name('payments.notchpay.return');
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');

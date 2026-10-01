@@ -26,7 +26,7 @@ Objectif : que **chacun** puisse expliquer le projet, la stack, les choix techni
 - validation admin des restaurateurs / livreurs
 - conseillère IA (**Sara**) pour aider à choisir
 
-Elle fait partie de la **suite Synoria** (avec le réseau social Synoria).
+Le produit présenté est **SynoriaEats**, la plateforme de commande et de livraison.
 
 ### Acteurs (rôles)
 

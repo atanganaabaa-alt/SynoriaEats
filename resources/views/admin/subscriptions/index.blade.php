@@ -4,7 +4,7 @@
             <div>
                 <x-back-link :href="route('admin.dashboard')" label="Dashboard" />
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Abonnements restos</h2>
-                <p class="text-sm text-gray-500">Essai {{ $trialDays }} j · Essentiel {{ number_format($plans[0]->yearlyPrice(), 0, ',', ' ') }} · Pro {{ number_format($plans[1]->yearlyPrice(), 0, ',', ' ') }} FCFA / an</p>
+                <p class="text-sm text-gray-500">Essai {{ $trialDays }} j · Essentiel {{ number_format($plans[0]->monthlyPrice(), 0, ',', ' ') }} · Pro {{ number_format($plans[1]->monthlyPrice(), 0, ',', ' ') }} FCFA / mois</p>
             </div>
         </div>
     </x-slot>
@@ -76,7 +76,7 @@
                                             @endforeach
                                         </select>
                                         <button type="submit" class="px-2.5 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-medium">
-                                            +1 an
+                                            +1 mois
                                         </button>
                                     </form>
                                 </td>

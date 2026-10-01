@@ -19,7 +19,7 @@
 
             <p class="text-sm text-synoria-ink-soft">
                 Un restaurant n’apparaît aux clients que s’il est <strong>approuvé</strong>, <strong>ouvert</strong>,
-                et couvert par l’<strong>essai 30 jours</strong> ou un <strong>abonnement</strong> (Essentiel / Pro).
+                et couvert par l’<strong>essai 30 jours</strong> ou un <strong>abonnement mensuel</strong> (Essentiel 15 000 / Pro 25 000 FCFA).
             </p>
 
             @forelse ($restaurants as $restaurant)

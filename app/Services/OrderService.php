@@ -48,7 +48,10 @@ class OrderService
         $deliveryLng = isset($data['delivery_lng']) ? (float) $data['delivery_lng'] : null;
         $subtotal = $cart->subtotal();
         $deliveryFee = $this->deliveryFees->forRestaurant($restaurant, $deliveryLat, $deliveryLng, $subtotal);
-        $commission = (int) round($subtotal * config('synoria.commission_rate', 0.10));
+        $commissionRate = ($restaurant->hasPaidSubscription() && $restaurant->subscription_plan)
+            ? $restaurant->subscription_plan->commissionRate()
+            : (float) config('synoria.commission_rate', 0.10);
+        $commission = (int) round($subtotal * $commissionRate);
         $total = $subtotal + $deliveryFee;
         $paymentMethod = PaymentMethod::from($data['payment_method']);
         $paymentPhone = $data['payment_phone'] ?? $data['delivery_phone'];
@@ -86,23 +89,41 @@ class OrderService
 
         $result = $this->payments->charge($order, $paymentMethod, $paymentPhone);
 
-        if ($result->success) {
-            $order->update([
-                'payment_status' => PaymentStatus::Paid,
-                'payment_reference' => $result->reference,
-            ]);
+        if ($result->pending) {
+            $order->update(['payment_reference' => $result->reference]);
             $cart->clear();
-            OrderPlaced::dispatch($order->fresh(['customer', 'restaurant.owner', 'items']));
-        } else {
-            $order->update([
-                'payment_status' => PaymentStatus::Failed,
-            ]);
+            session()->flash('payment_redirect', $result->redirectUrl);
 
-            throw new InvalidArgumentException($result->message ?? 'Paiement refusé.');
+            return $order->fresh(['items', 'restaurant']);
         }
 
-        $order = $order->fresh(['items', 'restaurant']);
-        $this->recordStatusChange($order, null, OrderStatus::Pending, $customer, 'Commande passée et payée');
+        if ($result->success) {
+            $cart->clear();
+
+            return $this->markPaid($order, (string) $result->reference, $customer);
+        }
+
+        $order->update([
+            'payment_status' => PaymentStatus::Failed,
+        ]);
+
+        throw new InvalidArgumentException($result->message ?? 'Paiement refusé.');
+    }
+
+    public function markPaid(Order $order, string $reference, ?User $actor = null): Order
+    {
+        if ($order->payment_status === PaymentStatus::Paid) {
+            return $order;
+        }
+
+        $order->update([
+            'payment_status' => PaymentStatus::Paid,
+            'payment_reference' => $reference,
+        ]);
+
+        $order = $order->fresh(['items', 'restaurant', 'customer']);
+        OrderPlaced::dispatch($order);
+        $this->recordStatusChange($order, null, OrderStatus::Pending, $actor ?? $order->customer, 'Commande passée et payée');
 
         return $order;
     }

@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController as ApiAuthController;
+use App\Http\Controllers\Payments\NotchPayWebhookController;
 use App\Http\Controllers\Api\MenuItemController as ApiMenuItemController;
 use App\Http\Controllers\Api\RestaurantController as ApiRestaurantController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/payments/notchpay/webhook', [NotchPayWebhookController::class, 'webhook'])
+    ->name('payments.notchpay.webhook');
 
 Route::post('/register', [ApiAuthController::class, 'register']);
 Route::post('/login', [ApiAuthController::class, 'login']);

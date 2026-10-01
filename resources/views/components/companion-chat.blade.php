@@ -364,7 +364,7 @@
                         } catch (e) {
                             this.messages.push({
                                 role: 'assistant',
-                                content: (e && e.message) ? String(e.message) : 'Désolée, j’ai eu un blanc. Réessaie juste après.',
+                                content: 'Désolée, j’ai eu un blanc. Réessaie juste après.',
                             });
                         } finally {
                             this.loading = false;
@@ -415,13 +415,7 @@
                         try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = null; }
 
                         if (!data || typeof data.reply !== 'string') {
-                            if (this.looksLikeO2switchChallenge(raw) || res.status === 503) {
-                                throw new Error('o2switch a bloqué la requête (anti-bot). Recharge la page, puis réessaie.');
-                            }
-                            if (res.status === 419) {
-                                throw new Error('Session expirée — recharge la page.');
-                            }
-                            throw new Error('Erreur serveur (' + res.status + '). Sur o2switch : git pull + migrate + config:clear.');
+                            throw new Error('companion_unavailable');
                         }
                         return data;
                     },

@@ -60,6 +60,10 @@ class CheckoutController extends Controller
             return back()->withInput()->withErrors(['checkout' => $e->getMessage()]);
         }
 
+        if ($redirect = session()->pull('payment_redirect')) {
+            return redirect()->away($redirect);
+        }
+
         return redirect()
             ->route('orders.show', $order)
             ->with('status', __('Commande confirmée et payée.'));

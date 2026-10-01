@@ -72,6 +72,10 @@ class RestaurantController extends Controller
             );
         } else {
             $restaurants = $query
+                ->orderByRaw("case when subscription_plan = ? and subscription_ends_at > ? then 0 else 1 end", [
+                    \App\Enums\SubscriptionPlan::Pro->value,
+                    now(),
+                ])
                 ->orderByDesc('rating')
                 ->paginate(12)
                 ->withQueryString();

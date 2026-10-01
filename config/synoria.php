@@ -9,9 +9,11 @@ return [
         'plans' => [
             'essentiel' => [
                 'price' => (int) env('SYNORIA_PLAN_ESSENTIEL_PRICE', 15000),
+                'commission' => 0.10,
             ],
             'pro' => [
                 'price' => (int) env('SYNORIA_PLAN_PRO_PRICE', 25000),
+                'commission' => 0.08,
             ],
         ],
     ],

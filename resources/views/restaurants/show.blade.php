@@ -3,7 +3,11 @@
         <div class="flex flex-col gap-1">
             <x-back-link :href="route('restaurants.index')" :label="__('Restaurants')" />
             <h2 class="font-semibold text-xl text-synoria-ink leading-tight dark:text-white">{{ $restaurant->name }}</h2>
-            <p class="text-sm text-synoria-ink-soft">{{ $restaurant->address }} · ★ {{ number_format($restaurant->rating, 1) }}</p>
+            <p class="text-sm text-synoria-ink-soft">{{ $restaurant->address }} · ★ {{ number_format($restaurant->rating, 1) }}
+                @if ($restaurant->isFeatured())
+                    · <span class="font-semibold text-synoria-ink">Pro</span>
+                @endif
+            </p>
         </div>
     </x-slot>
 
